@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
     # Database
-    DATABASE_URL: str = "postgresql://kido_user:kido_password@localhost:5432/kido_db"
+    DATABASE_URL: str = "sqlite:///./kido.db"
 
     # JWT
     SECRET_KEY: str = "kido-super-secret-key-change-in-production-2024"
