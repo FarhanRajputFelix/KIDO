@@ -1,0 +1,37 @@
+name: Build Full Flutter Web App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0' # Use stable modern version
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          flutter pub get
+
+      - name: Build Web App
+        run: |
+          cd frontend
+          flutter build web --release --web-renderer canvaskit
+
+      - name: Upload Web Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KIDO-Web-Dashboard
+          path: frontend/build/web/
