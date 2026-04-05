@@ -28,6 +28,7 @@ jobs:
       - name: Build Web App
         run: |
           cd frontend
+          flutter create . --platforms=web
           flutter build web --release --web-renderer canvaskit
 
       - name: Upload Web Build Artifact
