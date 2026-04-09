@@ -173,6 +173,28 @@ AI Adaptive Difficulty → Personalized Challenge
 
 ---
 
+## 🤖 Agentic AI System (Autonomous Intelligence)
+
+The **Agentic AI System** is the core intelligence layer of KIDO, moving beyond reactive responses to autonomous intelligence.
+
+### 🧠 Core AI Agents
+
+| Agent | Responsibility | Key Actions |
+|-------|----------------|-------------|
+| 🎓 **Learning Agent** | Personal Tutor AI | Track progress, identify weak subjects, generate personalized plans. |
+| 🎯 **Engagement Agent** | Retention Engine | Monitor attention, detect boredom, switch content formats (video ↔ game). |
+| 👥 **Social Safety Agent** | Interaction Monitor | Detect bullying, unsafe language, and suspicious social patterns. |
+| 👨‍👩‍👧 **Parent Assistant** | Parental Insights | Generate weekly reports, suggest improvements, send smart alerts. |
+| 🏫 **Teacher Support** | Educator Support | Auto-generate assignments, identify struggling students. |
+| 🎥 **Content Moderation**| Safety Guard | Real-time content scanning for language and visual safety. |
+| 🧠 **Behavior Analysis**| Pattern Recognition | Analyze emotional/behavioral trends (stress indicators, activity drops). |
+
+### ⚙️ System Workflow
+
+`User Activity → Data Collection → AI Agents Analysis → Decision Engine → Automated Actions`
+
+---
+
 ## 🔐 Safety Architecture
 
 | Layer | Implementation |
@@ -210,7 +232,7 @@ OPENAI_API_KEY=sk-...   # Optional
 - [x] **Phase 1 (MVP):** Auth, short lessons, quizzes, XP, streaks, leaderboard
 - [x] **Phase 2:** Friend system (parent-approved), parent dashboard, activity feed
 - [x] **Phase 3:** Teacher & classroom system, content platform
-- [x] **Phase 4:** AI personalization engine, behavior analysis
+- [x] **Phase 4:** Agentic AI System (Multi-Agent Layer), behavior analysis
 - [ ] **Phase 5 (Future):** Voice assistant, emotion AI, AR/VR learning, multi-language
 
 ---
