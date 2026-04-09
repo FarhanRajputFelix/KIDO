@@ -30,7 +30,7 @@
 |--------|----------|
 | 🎮 **Gamified Learning** | Adaptive quizzes, XP system, levels, badges, daily streaks |
 | 📺 **Safe Video Platform** | Age-filtered lessons, no ads/comments, AI content filtering |
-| 🤖 **AI Personalization** | Learning path generation, behavior analysis, smart recommendations |
+| 🤖 **Agentic AI System** | Autonomous Multi-Agent System: Learning, Engagement, Safety, Moderation |
 | 🔐 **Parent Control Panel** | Real-time monitoring, friend approvals, screen time limits, safety alerts |
 | 👥 **Controlled Social** | Parent-approved friends only, leaderboard, activity feed |
 | 🏫 **Teacher Integration** | Classroom management, lesson uploads, student progress tracking |
@@ -149,7 +149,8 @@ flutter run
 | 👥 Social | `POST /social/friends/request` `POST /social/friends/parent-approve` `GET /social/leaderboard/friends` `GET /social/feed` |
 | 👨‍👩‍👧 Parents | `GET /parents/dashboard` `GET /parents/children/{id}/report` `GET /parents/alerts` |
 | 🏫 Teachers | `POST /teachers/classrooms` `GET /teachers/classrooms/{id}/students` `POST /teachers/join-classroom` |
-| 🤖 AI | `GET /ai/learning-path/{child_id}` `GET /ai/behavior/{child_id}` `POST /ai/recommend` |
+| 🤖 Agentic AI | `POST /agents/run-all/{id}` `POST /agents/run/{type}/{id}` `POST /agents/event/{type}/{id}` |
+| 🦾 AI (Legacy) | `GET /ai/learning-path/{id}` `GET /ai/behavior/{id}` `POST /ai/recommend` |
 
 ---
 

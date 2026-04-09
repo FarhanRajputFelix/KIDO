@@ -5,7 +5,7 @@ import logging
 
 from app.core.config import settings
 from app.core.database import create_all_tables
-from app.routes import auth, children, content, games, social, parents, teachers, ai
+from app.routes import auth, children, content, games, social, parents, teachers, ai, agents
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -70,6 +70,7 @@ app.include_router(social.router)
 app.include_router(parents.router)
 app.include_router(teachers.router)
 app.include_router(ai.router)
+app.include_router(agents.router)
 
 
 # ── Root & Health ──────────────────────────────────────────────────────────────
