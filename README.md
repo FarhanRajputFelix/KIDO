@@ -81,12 +81,27 @@ KIDO/
 
 ---
 
-## ☁️ Deployment (Vercel)
+## ☁️ Deployment (Vercel & Database)
 
-The Next.js web application is optimized for Vercel. Ensure your project settings point to the root of this repository if the web app is at the root level.
+### 1. Database Setup (Required for Vercel)
+Vercel does not support persistent SQLite files. You **MUST** use a hosted PostgreSQL database (e.g., [Supabase](https://supabase.com) or [Neon](https://neon.tech)).
 
-> [!IMPORTANT]
-> If you encounter a **404: NOT_FOUND** error on Vercel, ensure your **Framework Preset** is set to **Next.js** and the **Root Directory** is correctly configured to the folder containing `package.json`.
+- Create a new PostgreSQL database.
+- Get the Connection String.
+- Add `DATABASE_URL` to your Vercel Project Environment Variables.
+
+### 2. Update Provider
+In `prisma/schema.prisma`, change the provider from `sqlite` to `postgresql`:
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+```
+
+### 3. Deploy
+- Push your changes to GitHub.
+- Vercel will automatically redeploy and use your new database.
 
 ---
 
