@@ -1,73 +1,46 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-ENV/
-*.egg-info/
-dist/
-build/
-*.egg
-.eggs/
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
-# Environment variables
-.env
-.env.local
-.env.*.local
-*.env
+# testing
+/coverage
 
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
 .DS_Store
-Thumbs.db
+*.pem
 
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-coverage.xml
-*.cover
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# Logs
-*.log
-logs/
-*.logs
+# env files (can opt-in for committing if needed)
+.env*
 
-# Database
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# database
 *.db
 *.sqlite3
 *.sqlite
 
-# Flutter/Dart
-frontend/.dart_tool/
-frontend/.flutter-plugins
-frontend/.flutter-plugins-dependencies
-frontend/.packages
-frontend/build/
-frontend/.pub-cache/
-frontend/.pub/
-frontend/pubspec.lock
-
-# Docker
-*.pid
-
-# OS
-.DS_Store
-Desktop.ini
-
-# Alembic
-migrations/versions/*.pyc
-
-# Secrets
-*.pem
-*.key
-*.cert
+/src/generated/prisma
