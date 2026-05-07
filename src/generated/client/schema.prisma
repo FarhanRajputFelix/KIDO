@@ -1,0 +1,242 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../src/generated/client"
+  binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-1.1.x", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users ───────────────────────────────────────────
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("parent") // parent | child | teacher | admin
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  children         Child[]
+  classrooms       Classroom[]
+  sentMessages     Message[]   @relation("SentMessages")
+  receivedMessages Message[]   @relation("ReceivedMessages")
+}
+
+// ─── Child Profile ───────────────────────────────────
+model Child {
+  id              String   @id @default(cuid())
+  name            String
+  age             Int
+  grade           String?
+  avatar          String?
+  xp              Int      @default(0)
+  level           Int      @default(1)
+  streak          Int      @default(0)
+  longestStreak   Int      @default(0)
+  lastActiveDate  String?
+  totalQuizzes    Int      @default(0)
+  totalWatchTime  Int      @default(0)
+  screenTimeLimit Int      @default(120) // minutes per day
+  badges          String   @default("[]") // JSON array of badge IDs
+  weakSubjects    String   @default("[]") // JSON
+  strongSubjects  String   @default("[]") // JSON
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  parentId     String
+  parent       User           @relation(fields: [parentId], references: [id])
+  quizAttempts QuizAttempt[]
+  watchLogs    WatchLog[]
+  activities   ActivityFeed[]
+  alerts       ParentAlert[]
+
+  sentFriendRequests     FriendRequest[] @relation("SentFriendRequests")
+  receivedFriendRequests FriendRequest[] @relation("ReceivedFriendRequests")
+  sentChallenges         PeerChallenge[] @relation("ChallengerRel")
+  receivedChallenges     PeerChallenge[] @relation("ChallengedRel")
+}
+
+// ─── Content (Videos/Articles) ───────────────────────
+model Content {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  type         String   @default("video") // video | article | interactive
+  subject      String
+  thumbnailUrl String?
+  contentUrl   String
+  duration     Int? // seconds
+  ageMin       Int      @default(6)
+  ageMax       Int      @default(14)
+  difficulty   String   @default("medium")
+  xpReward     Int      @default(10)
+  isApproved   Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  watchLogs WatchLog[]
+}
+
+// ─── Watch Logs ──────────────────────────────────────
+model WatchLog {
+  id        String   @id @default(cuid())
+  childId   String
+  contentId String
+  watchedAt DateTime @default(now())
+  duration  Int      @default(0) // seconds watched
+
+  child   Child   @relation(fields: [childId], references: [id])
+  content Content @relation(fields: [contentId], references: [id])
+}
+
+// ─── Quiz ────────────────────────────────────────────
+model Quiz {
+  id          String   @id @default(cuid())
+  title       String
+  subject     String
+  difficulty  String   @default("medium") // easy | medium | hard
+  questions   String // JSON array of questions
+  xpReward    Int      @default(50)
+  timeLimit   Int? // seconds
+  ageMin      Int      @default(6)
+  ageMax      Int      @default(14)
+  createdAt   DateTime @default(now())
+  createdById String?
+
+  attempts QuizAttempt[]
+}
+
+// ─── Quiz Attempt ────────────────────────────────────
+model QuizAttempt {
+  id             String   @id @default(cuid())
+  childId        String
+  quizId         String
+  score          Int
+  totalQuestions Int
+  answers        String // JSON array of answers
+  timeTaken      Int? // seconds
+  difficulty     String
+  xpEarned       Int      @default(0)
+  completedAt    DateTime @default(now())
+
+  child Child @relation(fields: [childId], references: [id])
+  quiz  Quiz  @relation(fields: [quizId], references: [id])
+}
+
+// ─── Friend Request ──────────────────────────────────
+model FriendRequest {
+  id             String   @id @default(cuid())
+  fromChildId    String
+  toChildId      String
+  status         String   @default("pending") // pending | approved | rejected
+  parentApproved Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  fromChild Child @relation("SentFriendRequests", fields: [fromChildId], references: [id])
+  toChild   Child @relation("ReceivedFriendRequests", fields: [toChildId], references: [id])
+}
+
+// ─── Parent Alert ────────────────────────────────────
+model ParentAlert {
+  id        String   @id @default(cuid())
+  childId   String
+  type      String // screen_time | safety | achievement | inactivity | social
+  title     String
+  message   String
+  severity  String   @default("info") // info | warning | critical
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  child Child @relation(fields: [childId], references: [id])
+}
+
+// ─── Classroom ───────────────────────────────────────
+model Classroom {
+  id         String   @id @default(cuid())
+  name       String
+  subject    String?
+  joinCode   String   @unique
+  grade      String?
+  teacherId  String
+  studentIds String   @default("[]") // JSON array of child IDs
+  createdAt  DateTime @default(now())
+
+  teacher User     @relation(fields: [teacherId], references: [id])
+  lessons Lesson[]
+}
+
+// ─── Lesson ──────────────────────────────────────────
+model Lesson {
+  id          String   @id @default(cuid())
+  classroomId String
+  title       String
+  description String?
+  contentUrl  String?
+  quizId      String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  classroom Classroom @relation(fields: [classroomId], references: [id])
+}
+
+// ─── Activity Feed ───────────────────────────────────
+model ActivityFeed {
+  id          String   @id @default(cuid())
+  childId     String
+  type        String // quiz_completed | video_watched | badge_earned | level_up | streak | friend_added | challenge
+  title       String
+  description String?
+  xpEarned    Int      @default(0)
+  metadata    String? // JSON
+  createdAt   DateTime @default(now())
+
+  child Child @relation(fields: [childId], references: [id])
+}
+
+// ─── Messages ────────────────────────────────────────
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  content    String
+  type       String   @default("chat") // chat | challenge | system
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}
+
+// ─── Peer Challenge ──────────────────────────────────
+model PeerChallenge {
+  id              String   @id @default(cuid())
+  challengerId    String
+  challengedId    String
+  quizId          String?
+  subject         String
+  status          String   @default("pending") // pending | accepted | completed | declined
+  challengerScore Int?
+  challengedScore Int?
+  winnerId        String?
+  xpReward        Int      @default(50)
+  createdAt       DateTime @default(now())
+
+  challenger Child @relation("ChallengerRel", fields: [challengerId], references: [id])
+  challenged Child @relation("ChallengedRel", fields: [challengedId], references: [id])
+}
+
+// ─── Badge Definitions ──────────────────────────────
+model Badge {
+  id          String @id @default(cuid())
+  name        String
+  description String
+  icon        String // emoji or icon name
+  category    String // streak | quiz | social | learning | special
+  requirement String // JSON: { type: "streak", value: 7 }
+  xpReward    Int    @default(25)
+}
