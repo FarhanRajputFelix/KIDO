@@ -26,6 +26,14 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    if (!process.env.DATABASE_URL) {
+      console.error("CRITICAL: DATABASE_URL is not defined in environment variables.");
+      return NextResponse.json(
+        { error: "Database configuration error" },
+        { status: 500 }
+      );
+    }
+
     const user = await prisma.user.create({
       data: {
         email,
@@ -35,14 +43,30 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    console.log("User registered successfully:", user.email);
+
     return NextResponse.json(
       { id: user.id, email: user.email, name: user.name, role: user.role },
       { status: 201 }
     );
-  } catch (error) {
-    console.error("Registration error:", error);
+  } catch (error: any) {
+    console.error("Registration error details:", {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: error.stack
+    });
+    
+    // Check for specific Prisma errors
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { error: "User already exists (unique constraint violation)" },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: `Internal server error: ${error.message || 'Unknown error'}` },
       { status: 500 }
     );
   }
