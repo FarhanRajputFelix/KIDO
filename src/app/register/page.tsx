@@ -122,6 +122,7 @@ export default function RegisterPage() {
             >
               <option value="parent">👨‍👩‍👧 Parent</option>
               <option value="teacher">👨‍🏫 Teacher</option>
+              <option value="child">🧒 Student / Kid</option>
             </select>
           </div>
 

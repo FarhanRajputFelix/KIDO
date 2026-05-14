@@ -60,6 +60,51 @@ model Child {
   receivedFriendRequests FriendRequest[] @relation("ReceivedFriendRequests")
   sentChallenges         PeerChallenge[] @relation("ChallengerRel")
   receivedChallenges     PeerChallenge[] @relation("ChallengedRel")
+  chatMessages           ChatMessage[]
+  screenTimeLogs         ScreenTimeLog[]
+  progressReports        ProgressReport[]
+}
+
+// ─── AI Chat Messages ────────────────────────────────
+model ChatMessage {
+  id            String   @id @default(cuid())
+  childId       String
+  role          String   // user | assistant
+  content       String
+  metadata      String?  // JSON: images, code blocks, etc.
+  createdAt     DateTime @default(now())
+
+  child         Child    @relation(fields: [childId], references: [id])
+}
+
+// ─── Screen Time Logs ────────────────────────────────
+model ScreenTimeLog {
+  id            String   @id @default(cuid())
+  childId       String
+  date          String   // YYYY-MM-DD
+  minutes       Int      @default(0)
+  alertTriggered Boolean @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  child         Child    @relation(fields: [childId], references: [id])
+
+  @@unique([childId, date])
+}
+
+// ─── AI Progress Reports ─────────────────────────────
+model ProgressReport {
+  id            String   @id @default(cuid())
+  childId       String
+  period        String   // weekly | monthly | custom
+  content       String   // AI-generated narrative report
+  interests     String   @default("[]") // JSON: detected interests
+  recommendations String @default("[]") // JSON: personalized recommendations
+  strengths     String   @default("[]") // JSON
+  weaknesses    String   @default("[]") // JSON
+  generatedAt   DateTime @default(now())
+
+  child         Child    @relation(fields: [childId], references: [id])
 }
 
 // ─── Content (Videos/Articles) ───────────────────────

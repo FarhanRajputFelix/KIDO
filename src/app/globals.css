@@ -473,3 +473,63 @@ body {
 .subject-coding { --subject-color: #8b5cf6; }
 .subject-art { --subject-color: #ec4899; }
 .subject-general { --subject-color: #14b8a6; }
+
+/* ─── Chat Bubbles ─────────────────────────────────── */
+.chat-bubble-user {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  padding: 12px 18px;
+  border-radius: 18px 18px 4px 18px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.chat-bubble-ai {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  color: var(--foreground);
+  padding: 14px 18px;
+  border-radius: 18px 18px 18px 4px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.chat-content {
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.chat-content strong {
+  font-weight: 700;
+}
+
+.chat-code-block {
+  display: block;
+  background: #1e1b4b;
+  color: #e0d4fd;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin: 8px 0;
+  overflow-x: auto;
+  font-family: var(--font-mono, 'Fira Code', monospace);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.chat-inline-code {
+  background: rgba(139, 92, 246, 0.15);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9em;
+}
+
+/* ─── Game Styles ──────────────────────────────────── */
+.game-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.game-card:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+

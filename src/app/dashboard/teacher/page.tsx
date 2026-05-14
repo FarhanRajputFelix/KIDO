@@ -1,0 +1,318 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useSession, signOut } from "next-auth/react";
+import Link from "next/link";
+
+interface Student {
+  id: string;
+  name: string;
+  avatar: string;
+  age: number;
+  grade: string;
+  xp: number;
+  level: number;
+  streak: number;
+  totalQuizzes: number;
+  strongSubjects: string;
+  weakSubjects: string;
+  parent: { name: string; email: string };
+  quizAttempts: Array<{ score: number; totalQuestions: number; difficulty: string; quiz: { title: string; subject: string } }>;
+}
+
+export default function TeacherDashboard() {
+  const { data: session, status } = useSession();
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
+  const [generatingQuiz, setGeneratingQuiz] = useState(false);
+  const [quizSubject, setQuizSubject] = useState("math");
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetch("/api/dashboard")
+        .then(r => r.json())
+        .then(d => { setData(d); setLoading(false); })
+        .catch(() => setLoading(false));
+    }
+  }, [status]);
+
+  const handleGenerateQuiz = async (childId: string) => {
+    setGeneratingQuiz(true);
+    try {
+      const res = await fetch("/api/ai/quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ childId, subject: quizSubject }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert(`Quiz "${data.quiz.title}" generated successfully! 🎯`);
+      }
+    } catch (e) { console.error(e); }
+    setGeneratingQuiz(false);
+  };
+
+  if (status === "loading" || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-4 animate-float">👨‍🏫</div>
+          <p className="text-foreground/50">Loading teacher dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+  const activeStudent: Student | undefined = data.students?.find((s: Student) => s.id === selectedStudent);
+
+  const SUBJECTS = [
+    { id: "math", name: "Math", icon: "🧮", color: "#6366f1" },
+    { id: "science", name: "Science", icon: "🔬", color: "#10b981" },
+    { id: "english", name: "English", icon: "📚", color: "#f59e0b" },
+    { id: "history", name: "History", icon: "🏛️", color: "#ef4444" },
+    { id: "geography", name: "Geography", icon: "🌍", color: "#3b82f6" },
+    { id: "coding", name: "Coding", icon: "💻", color: "#8b5cf6" },
+  ];
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* Top Navbar */}
+      <nav className="flex items-center justify-between px-6 py-3 border-b border-[var(--card-border)] bg-[var(--card)]" style={{ height: "var(--nav-height)" }}>
+        <div className="flex items-center gap-4">
+          <Link href="/" className="flex items-center gap-2 text-lg font-bold no-underline">
+            <span className="text-xl">🧒</span>
+            <span className="gradient-text">KIDO</span>
+          </Link>
+          <span className="px-2 py-1 rounded-lg bg-warning-500/10 text-warning-500 text-xs font-bold uppercase">Teacher</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-foreground/50 hidden md:inline">{session?.user?.name}</span>
+          <button onClick={() => signOut({ callbackUrl: "/" })} className="btn-secondary py-2 px-4 text-sm">Logout</button>
+        </div>
+      </nav>
+
+      <div className="flex flex-1">
+        {/* Sidebar */}
+        <aside className="sidebar hidden md:flex">
+          <h3 className="text-xs uppercase tracking-wider text-sidebar-text/50 mb-3 px-4">Navigation</h3>
+          {[
+            { id: "overview", icon: "📊", label: "Overview" },
+            { id: "students", icon: "🧒", label: `Students (${data.students?.length || 0})` },
+            { id: "classrooms", icon: "🏫", label: `Classrooms (${data.classrooms?.length || 0})` },
+            { id: "generate", icon: "🤖", label: "AI Quiz Generator" },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`sidebar-link ${activeTab === tab.id ? "active" : ""}`}
+              style={{ border: "none", background: activeTab === tab.id ? "rgba(139, 92, 246, 0.25)" : "transparent" }}
+            >
+              <span className="text-xl">{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 p-6 md:p-8 overflow-y-auto" style={{ maxHeight: "calc(100vh - var(--nav-height))" }}>
+          <div className="max-w-6xl mx-auto">
+            {/* Overview */}
+            {activeTab === "overview" && (
+              <div className="animate-slide-up">
+                <h1 className="text-2xl font-bold mb-6">👨‍🏫 Teacher Dashboard</h1>
+
+                <div className="grid grid-cols-3 gap-4 mb-8 stagger-children">
+                  <div className="card text-center" style={{ borderTop: "3px solid #10b981" }}>
+                    <div className="stat-value">{data.stats?.totalStudents || 0}</div>
+                    <div className="text-sm text-foreground/50 mt-1">Total Students</div>
+                  </div>
+                  <div className="card text-center" style={{ borderTop: "3px solid #8b5cf6" }}>
+                    <div className="stat-value">{data.stats?.totalClassrooms || 0}</div>
+                    <div className="text-sm text-foreground/50 mt-1">Classrooms</div>
+                  </div>
+                  <div className="card text-center" style={{ borderTop: "3px solid #f59e0b" }}>
+                    <div className="stat-value">{data.stats?.avgScore || 0}%</div>
+                    <div className="text-sm text-foreground/50 mt-1">Avg Score</div>
+                  </div>
+                </div>
+
+                {/* Subject Performance */}
+                {data.subjectStats && Object.keys(data.subjectStats).length > 0 && (
+                  <div className="card mb-6">
+                    <h3 className="font-bold mb-4 flex items-center gap-2"><span className="text-xl">📈</span> Subject Performance (Class Average)</h3>
+                    <div className="space-y-3">
+                      {Object.entries(data.subjectStats).map(([subject, stats]: [string, any]) => {
+                        const avg = Math.round((stats.correct / Math.max(1, stats.total)) * 100);
+                        const subjectInfo = SUBJECTS.find(s => s.id === subject);
+                        return (
+                          <div key={subject} className="flex items-center gap-3">
+                            <span className="text-xl w-8">{subjectInfo?.icon || "📝"}</span>
+                            <div className="w-24 font-medium text-sm capitalize">{subject}</div>
+                            <div className="flex-1">
+                              <div className="xp-bar-track" style={{ height: 10 }}>
+                                <div className="xp-bar-fill" style={{ width: `${avg}%`, background: `linear-gradient(90deg, ${subjectInfo?.color || "#8b5cf6"}, ${subjectInfo?.color || "#8b5cf6"}88)` }} />
+                              </div>
+                            </div>
+                            <div className={`font-bold text-sm w-12 text-right ${avg >= 80 ? "text-success-500" : avg >= 60 ? "text-warning-500" : "text-accent-500"}`}>
+                              {avg}%
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Students Tab */}
+            {activeTab === "students" && (
+              <div className="animate-slide-up">
+                <h1 className="text-2xl font-bold mb-6">🧒 Student Progress</h1>
+                <div className="space-y-3">
+                  {data.students?.map((s: Student) => {
+                    const strong = JSON.parse(s.strongSubjects);
+                    const weak = JSON.parse(s.weakSubjects);
+                    return (
+                      <div key={s.id} className="card cursor-pointer" onClick={() => { setSelectedStudent(s.id === selectedStudent ? null : s.id); }}>
+                        <div className="flex items-center gap-4">
+                          <span className="text-3xl">{s.avatar}</span>
+                          <div className="flex-1">
+                            <div className="font-bold">{s.name}</div>
+                            <div className="text-xs text-foreground/50">{s.grade} Grade · Age {s.age} · Parent: {s.parent.name}</div>
+                          </div>
+                          <div className="text-right hidden md:block">
+                            <div className="font-bold text-primary-500">Lvl {s.level}</div>
+                            <div className="text-xs text-foreground/50">{s.xp} XP · 🔥{s.streak}</div>
+                          </div>
+                        </div>
+
+                        {selectedStudent === s.id && (
+                          <div className="mt-4 pt-4 border-t border-[var(--card-border)] animate-slide-up">
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                              <div>
+                                <p className="text-xs text-foreground/50 mb-2 uppercase tracking-wider">💪 Strong Subjects</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {strong.length > 0 ? strong.map((s: string) => (
+                                    <span key={s} className="px-2 py-1 rounded-lg bg-success-500/10 text-success-500 text-xs capitalize">{s}</span>
+                                  )) : <span className="text-xs text-foreground/40">Determining...</span>}
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-xs text-foreground/50 mb-2 uppercase tracking-wider">📈 Needs Help</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {weak.length > 0 ? weak.map((s: string) => (
+                                    <span key={s} className="px-2 py-1 rounded-lg bg-warning-500/10 text-warning-500 text-xs capitalize">{s}</span>
+                                  )) : <span className="text-xs text-foreground/40">All good!</span>}
+                                </div>
+                              </div>
+                            </div>
+
+                            <h4 className="font-medium text-sm mb-2">Recent Quizzes</h4>
+                            <div className="space-y-1">
+                              {s.quizAttempts.map((a, i) => (
+                                <div key={i} className="flex items-center gap-2 text-xs p-2 rounded-lg bg-[var(--background)]">
+                                  <span>{a.quiz.subject === "math" ? "🧮" : a.quiz.subject === "science" ? "🔬" : "📝"}</span>
+                                  <span className="flex-1">{a.quiz.title}</span>
+                                  <span className={`font-bold ${(a.score / a.totalQuestions) >= 0.8 ? "text-success-500" : (a.score / a.totalQuestions) >= 0.6 ? "text-warning-500" : "text-accent-500"}`}>
+                                    {a.score}/{a.totalQuestions}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {(!data.students || data.students.length === 0) && (
+                    <div className="card text-center py-12">
+                      <div className="text-4xl mb-4">🏫</div>
+                      <p className="text-foreground/50">No students in your classrooms yet</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Classrooms Tab */}
+            {activeTab === "classrooms" && (
+              <div className="animate-slide-up">
+                <h1 className="text-2xl font-bold mb-6">🏫 My Classrooms</h1>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {data.classrooms?.map((c: any) => (
+                    <div key={c.id} className="card">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-bold text-lg">{c.name}</h3>
+                        <span className="px-2 py-1 rounded-lg bg-primary-500/10 text-primary-500 text-xs font-mono">{c.joinCode}</span>
+                      </div>
+                      <div className="text-sm text-foreground/50 space-y-1">
+                        {c.subject && <p>📚 Subject: {c.subject}</p>}
+                        {c.grade && <p>🎓 Grade: {c.grade}</p>}
+                        <p>👨‍🎓 Students: {JSON.parse(c.studentIds).length}</p>
+                        <p>📋 Lessons: {c.lessons?.length || 0}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* AI Quiz Generator */}
+            {activeTab === "generate" && (
+              <div className="animate-slide-up">
+                <h1 className="text-2xl font-bold mb-6">🤖 AI Quiz Generator</h1>
+                <p className="text-foreground/50 mb-6">Select a student and subject to generate a personalized AI quiz based on their age, grade, and learning profile.</p>
+
+                <div className="card mb-6">
+                  <h3 className="font-bold mb-4">Select Subject</h3>
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {SUBJECTS.map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => setQuizSubject(s.id)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all"
+                        style={{
+                          background: quizSubject === s.id ? `${s.color}20` : "var(--card)",
+                          color: quizSubject === s.id ? s.color : "var(--foreground)",
+                          border: `1.5px solid ${quizSubject === s.id ? s.color : "var(--card-border)"}`,
+                        }}
+                      >
+                        <span>{s.icon}</span> {s.name}
+                      </button>
+                    ))}
+                  </div>
+
+                  <h3 className="font-bold mb-4">Select Student</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {data.students?.map((s: Student) => (
+                      <button
+                        key={s.id}
+                        onClick={() => handleGenerateQuiz(s.id)}
+                        disabled={generatingQuiz}
+                        className="card flex items-center gap-3 text-left cursor-pointer hover:border-primary-500 transition-all"
+                        style={{ border: "1px solid var(--card-border)" }}
+                      >
+                        <span className="text-2xl">{s.avatar}</span>
+                        <div className="flex-1">
+                          <div className="font-medium">{s.name}</div>
+                          <div className="text-xs text-foreground/50">{s.grade} · Age {s.age} · Lvl {s.level}</div>
+                        </div>
+                        <span className="btn-primary py-1.5 px-3 text-xs">
+                          {generatingQuiz ? "..." : "✨ Generate"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
