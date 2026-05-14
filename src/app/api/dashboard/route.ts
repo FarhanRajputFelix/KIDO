@@ -144,8 +144,11 @@ export async function GET(req: NextRequest) {
     }
 
     // ─── Child/Kid Dashboard ───────────────────────────
+    const userRow = await prisma.user.findUnique({ where: { id: userId } });
+    const childName = userRow?.name || "";
+
     const child = await prisma.child.findFirst({
-      where: { parentId: userId },
+      where: { name: childName },
       include: {
         quizAttempts: {
           orderBy: { completedAt: "desc" },
