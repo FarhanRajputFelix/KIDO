@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     // Run the full 11-agent pipeline
     const trace = await runAgentPipeline(context);
 
-    // Save to database
+    // Save trace to database
     await prisma.agentTrace.create({
       data: {
         childId: child.id,
@@ -92,6 +92,67 @@ export async function POST(req: NextRequest) {
         }),
       },
     });
+
+    // ── Create real ParentAlerts from agent outputs ──────────────────────
+    const alertsToCreate: { childId: string; type: string; title: string; message: string; severity: string }[] = [];
+
+    for (const result of trace.agentResults) {
+      // BehaviorAgent: burnout risk
+      if (result.agent === "BehaviorAnalysisAgent" && result.output?.burnoutRisk === "high") {
+        alertsToCreate.push({
+          childId: child.id,
+          type: "burnout_risk",
+          title: `KIDO AI noticed signs of learning fatigue for ${child.name}`,
+          message: `${result.reasoning} Recommended lighter sessions this week.`,
+          severity: "warning",
+        });
+      }
+      // SafetyAgent: message blocked
+      if (result.agent === "SafetyModerationAgent" && result.output?.safe === false) {
+        alertsToCreate.push({
+          childId: child.id,
+          type: "safety_incidents",
+          title: `🛡️ Message blocked for ${child.name}`,
+          message: `${result.reasoning}`,
+          severity: "critical",
+        });
+      }
+      // ContradictionAgent: contradiction detected
+      if (result.agent === "ContradictionDetectionAgent" && result.output?.detected) {
+        alertsToCreate.push({
+          childId: child.id,
+          type: "contradiction",
+          title: `⚠️ Learning signal contradiction detected for ${child.name}`,
+          message: `${result.reasoning}`,
+          severity: "warning",
+        });
+      }
+      // EngagementAgent: fatigue
+      if (result.agent === "EngagementOptimizationAgent" && result.output?.engagementStatus === "fatigued") {
+        alertsToCreate.push({
+          childId: child.id,
+          type: "engagement",
+          title: `💤 ${child.name} may be getting tired`,
+          message: `${result.reasoning}`,
+          severity: "info",
+        });
+      }
+      // ParentInsightAgent: learning pace slow
+      if (result.agent === "ParentInsightAgent" && result.output?.alerts?.includes("learning_pace_slow")) {
+        alertsToCreate.push({
+          childId: child.id,
+          type: "learning_pace_slow",
+          title: `📉 ${child.name}'s learning pace has slowed`,
+          message: `${result.reasoning}`,
+          severity: "info",
+        });
+      }
+    }
+
+    // Write alerts to DB (batch)
+    if (alertsToCreate.length > 0) {
+      await prisma.parentAlert.createMany({ data: alertsToCreate });
+    }
 
     return NextResponse.json(trace);
   } catch (error) {

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { formatXP, xpProgress } from "@/lib/utils";
+import EventFeed from "@/components/EventFeed";
 
 interface Child {
   id: string;
@@ -334,6 +335,12 @@ export default function ParentDashboard() {
                           )) || <p className="text-sm text-foreground/40 text-center py-4">No recent activity</p>}
                         </div>
                       </div>
+                    </div>
+
+                    {/* AI Event Stream */}
+                    <div className="card mt-6">
+                      <h3 className="font-bold mb-4 flex items-center gap-2"><span className="text-xl">🤖</span> AI Event Stream</h3>
+                      <EventFeed childId={activeChild.id} maxEvents={10} />
                     </div>
                   </div>
                 )}

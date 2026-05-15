@@ -7,6 +7,7 @@ async function main() {
   console.log("🌱 Seeding KIDO database...");
 
   // Clean existing data
+  await prisma.agentTrace.deleteMany();
   await prisma.chatMessage.deleteMany();
   await prisma.screenTimeLog.deleteMany();
   await prisma.progressReport.deleteMany();
@@ -89,10 +90,26 @@ async function main() {
     },
   });
 
-  // Also link child user to child1 for direct login
-  // (child user's parentId = parent.id so dashboard shows data)
+  // 4th child: Hamza — contradiction persona (scores ↑, sessions ↓)
+  const child4 = await prisma.child.create({
+    data: {
+      name: "Hamza", age: 10, grade: "5th", avatar: "🐯",
+      xp: 1800, level: 4, streak: 8, longestStreak: 15,
+      lastActiveDate: new Date().toISOString().split("T")[0],
+      totalQuizzes: 35, totalWatchTime: 1200,
+      badges: JSON.stringify(["first_quiz", "streak_7", "level_5"]),
+      weakSubjects: JSON.stringify(["english", "history"]),
+      strongSubjects: JSON.stringify(["math", "coding"]),
+      parentId: parent.id,
+    },
+  });
 
-  console.log("✅ Children created");
+  // Create child user for Hamza login
+  await prisma.user.create({
+    data: { email: "hamza@kido.com", password, name: "Hamza", role: "child", avatar: "🐯" },
+  });
+
+  console.log("✅ Children created (Aiza, Ali, Zara, Hamza)");
 
   // Create quizzes
   const quizzes = await Promise.all([
@@ -289,6 +306,75 @@ async function main() {
     },
   });
 
+  // ── Demo Agent Traces ──────────────────────────────────
+  const demoAgentResults = (scenario: string): any[] => {
+    const base: any[] = [
+      { agent: "LearningIntelligenceAgent", inputSummary: "score=75%, subject=math, difficulty=5", reasoning: "Score 75% in acceptable range. Holding difficulty at 5. Reinforcing current concepts before progression.", output: { difficultyAdjustment: "hold", newDifficulty: 5 }, confidence: 0.90, executionMs: 234, actionsTriggered: ["update_difficulty_hold", "refresh_content_feed"], status: "success", memoryUpdates: ["learningVelocity: 0.50 → 0.60"], referencedAgents: [] },
+      { agent: "EngagementOptimizationAgent", inputSummary: "avg_response=12s, session=25min, difficulty=5", reasoning: "Engagement levels normal. Active learning detected.", output: { engagementStatus: "engaged", recommendedAction: "continue" }, confidence: 0.91, executionMs: 187, actionsTriggered: ["continue"], status: "success", memoryUpdates: ["engagementBaseline: 0.70 → 0.85"], referencedAgents: ["LearningIntelligenceAgent"] },
+      { agent: "BehaviorAnalysisAgent", inputSummary: "score_trend=0.1, session_trend=0, streak=12", reasoning: "Behavioral signals within normal range. No stress indicators detected.", output: { burnoutRisk: "low", behaviorSignals: [] }, confidence: 0.90, executionMs: 156, actionsTriggered: [], status: "success", memoryUpdates: [], referencedAgents: ["LearningIntelligenceAgent", "EngagementOptimizationAgent"] },
+      { agent: "SafetyModerationAgent", inputSummary: "no_message", reasoning: "No social message to moderate. Safety check passed.", output: { toxicityScore: 0, safe: true, action: "none" }, confidence: 1.0, executionMs: 120, actionsTriggered: [], status: "success", memoryUpdates: [], referencedAgents: [] },
+      { agent: "FriendApprovalAgent", inputSummary: "no_friend_request", reasoning: "No pending friend requests to analyze.", output: { action: "none", requiresParentApproval: false }, confidence: 1.0, executionMs: 125, actionsTriggered: [], status: "success", memoryUpdates: [], referencedAgents: [] },
+      { agent: "SocialModerationAgent", inputSummary: "screen_time=45/120min, restrictions=0", reasoning: "Social activity within healthy bounds.", output: { socialStatus: "healthy", screenTimeUsage: 38 }, confidence: 0.92, executionMs: 143, actionsTriggered: [], status: "success", memoryUpdates: [], referencedAgents: ["SafetyModerationAgent"] },
+      { agent: "ParentInsightAgent", inputSummary: "velocity=0.60, burnout=0.00, incidents=0", reasoning: "Child is progressing well. No urgent insights to report.", output: { insights: ["Learning on track!"], alerts: [], insightCount: 1 }, confidence: 0.85, executionMs: 198, actionsTriggered: [], status: "success", memoryUpdates: [], referencedAgents: ["BehaviorAnalysisAgent"] },
+      { agent: "TeacherSupportAgent", inputSummary: "weak_areas=1, style=visual", reasoning: "Generated 2 teaching recommendations.", output: { recommendations: ["Use diagrams and videos for best results."], teachingFocusAreas: ["history"] }, confidence: 0.80, executionMs: 167, actionsTriggered: ["update_teacher_insights"], status: "success", memoryUpdates: [], referencedAgents: ["LearningIntelligenceAgent"] },
+      { agent: "ProgressAnalyticsAgent", inputSummary: "score=75%, quizzes=47, level=6", reasoning: "Performance: good | Momentum: steady | Engagement: high", output: { performanceTier: "good", learningMomentum: "steady", engagementLevel: "high", socialHealth: "excellent", overallGrowth: "established" }, confidence: 0.93, executionMs: 178, actionsTriggered: ["update_progress_dashboard"], status: "success", memoryUpdates: [], referencedAgents: ["LearningIntelligenceAgent", "EngagementOptimizationAgent"] },
+    ];
+
+    if (scenario === "contradiction") {
+      base[2] = { ...base[2], reasoning: "Scores improving but session time dropping sharply — possible burnout. Referenced EngagementOptimizationAgent engagement baseline.", output: { burnoutRisk: "medium", behaviorSignals: ["contradiction_score_up_time_down"] }, confidence: 0.72, memoryUpdates: ["burnoutScore: 0.00 → 0.30", "emotionalIndicators updated"] };
+      base.push(
+        { agent: "ContradictionDetectionAgent", inputSummary: "score_trend=0.3, session_trend=-0.4, burnout=0.30", reasoning: "⚠️ 1 contradiction detected: Quiz scores improving but session time sharply dropping. Child may be guessing faster, not learning deeper. Triggering deep behavioral analysis.", output: { contradictions: ["CONTRADICTION: Score up but time down"], detected: true, contradictionCount: 1 }, confidence: 0.65, executionMs: 312, actionsTriggered: ["trigger_deep_analysis", "notify_parent_contradiction", "recalibrate_profile"], status: "success", memoryUpdates: ["socialTrustScore: 0.80 → 0.60"], referencedAgents: ["LearningIntelligenceAgent", "EngagementOptimizationAgent", "BehaviorAnalysisAgent"] },
+        { agent: "FallbackRecoveryAgent", inputSummary: "agents_checked=10, failed=0, low_conf=1", reasoning: "⚡ Fallback triggered. 2 issues detected: Low confidence from ContradictionDetectionAgent(65%). Contradictions detected: 1. Recovery actions: reduce_overall_confidence, trigger_deep_behavioral_analysis.", output: { issues: ["Low confidence", "Contradictions detected: 1"], recoveryActions: ["reduce_overall_confidence", "trigger_deep_behavioral_analysis"], contradictionDetected: true }, confidence: 0.60, executionMs: 245, actionsTriggered: ["reduce_overall_confidence", "trigger_deep_behavioral_analysis"], status: "success", memoryUpdates: [], referencedAgents: ["ContradictionDetectionAgent"] }
+      );
+    } else if (scenario === "burnout") {
+      base[1] = { ...base[1], reasoning: "Session length 55min exceeds recommended 45min. KIDO AI noticed signs of learning fatigue.", output: { engagementStatus: "fatigued", recommendedAction: "recommend_break" }, confidence: 0.88, actionsTriggered: ["recommend_break"], memoryUpdates: ["burnoutScore: 0.00 → 0.20"] };
+      base[2] = { ...base[2], reasoning: "14+ day streak with declining session time — burnout risk HIGH. Sustained effort without recovery.", output: { burnoutRisk: "high", behaviorSignals: ["long_streak_declining_sessions"] }, confidence: 0.85, actionsTriggered: ["alert_parent", "recommend_break"], memoryUpdates: ["burnoutScore: 0.20 → 0.70", "emotionalIndicators updated"] };
+      base.push(
+        { agent: "ContradictionDetectionAgent", inputSummary: "score_trend=0.1, session_trend=-0.2, burnout=0.70", reasoning: "⚠️ 1 contradiction: High engagement but burnout indicators elevated. Possible masking behavior.", output: { contradictions: ["CONTRADICTION: Engagement high but burnout elevated"], detected: true, contradictionCount: 1 }, confidence: 0.65, executionMs: 289, actionsTriggered: ["trigger_deep_analysis"], status: "success", memoryUpdates: [], referencedAgents: ["EngagementOptimizationAgent", "BehaviorAnalysisAgent"] },
+        { agent: "FallbackRecoveryAgent", inputSummary: "agents_checked=10, failed=0, low_conf=1", reasoning: "⚡ Fallback triggered. HIGH burnout score (70%). Overriding engagement recommendations. Forcing break suggestion.", output: { issues: ["HIGH burnout score (70%)"], recoveryActions: ["force_break_recommendation", "parent_burnout_alert"], contradictionDetected: true }, confidence: 0.60, executionMs: 210, actionsTriggered: ["force_break_recommendation", "parent_burnout_alert"], status: "success", memoryUpdates: [], referencedAgents: ["BehaviorAnalysisAgent", "ContradictionDetectionAgent"] }
+      );
+    } else {
+      base.push(
+        { agent: "ContradictionDetectionAgent", inputSummary: "score_trend=0.1, session_trend=0, burnout=0.00", reasoning: "No contradictions detected. All agent signals are consistent. System confidence remains high.", output: { contradictions: [], detected: false, contradictionCount: 0 }, confidence: 0.95, executionMs: 201, actionsTriggered: [], status: "success", memoryUpdates: [], referencedAgents: ["LearningIntelligenceAgent", "EngagementOptimizationAgent", "BehaviorAnalysisAgent", "SafetyModerationAgent"] },
+        { agent: "FallbackRecoveryAgent", inputSummary: "agents_checked=10, failed=0, low_conf=0", reasoning: "✅ All 10 agents completed successfully. No failures or low-confidence outputs. System operating at full confidence.", output: { issues: [], recoveryActions: [], contradictionDetected: false }, confidence: 0.97, executionMs: 145, actionsTriggered: [], status: "success", memoryUpdates: [], referencedAgents: ["ContradictionDetectionAgent"] }
+      );
+    }
+    return base;
+  };
+
+  // Create demo agent traces
+  await prisma.agentTrace.create({
+    data: {
+      childId: child1.id, sessionId: "demo-aiza-1", triggerEvent: "quiz_submit",
+      agentResults: JSON.stringify(demoAgentResults("normal")),
+      overallConfidence: 0.906, fallbackTriggered: false, contradictionDetected: false,
+      finalRecommendations: JSON.stringify(["Practice math level 5", "Use diagrams and videos for best results."]),
+      metadata: JSON.stringify({ timestamp: new Date().toISOString() }),
+    },
+  });
+
+  await prisma.agentTrace.create({
+    data: {
+      childId: child4.id, sessionId: "demo-hamza-1", triggerEvent: "quiz_submit",
+      agentResults: JSON.stringify(demoAgentResults("contradiction")),
+      overallConfidence: 0.742, fallbackTriggered: true, contradictionDetected: true,
+      finalRecommendations: JSON.stringify(["Deep behavioral analysis triggered", "Profile recalibration needed"]),
+      metadata: JSON.stringify({ timestamp: new Date().toISOString() }),
+    },
+  });
+
+  await prisma.agentTrace.create({
+    data: {
+      childId: child3.id, sessionId: "demo-zara-1", triggerEvent: "quiz_submit",
+      agentResults: JSON.stringify(demoAgentResults("burnout")),
+      overallConfidence: 0.781, fallbackTriggered: true, contradictionDetected: true,
+      finalRecommendations: JSON.stringify(["Force break recommendation", "Lighter sessions this week"]),
+      metadata: JSON.stringify({ timestamp: new Date().toISOString() }),
+    },
+  });
+
+  console.log("✅ Agent traces created");
+
   console.log("✅ All seed data created");
   console.log("\n🎉 Seeding complete!");
   console.log("\n📧 Login credentials:");
@@ -296,6 +382,7 @@ async function main() {
   console.log("   Parent:  parent@kido.com / password123");
   console.log("   Teacher: teacher@kido.com / password123");
   console.log("   Kid:     aiza@kido.com / password123");
+  console.log("   Kid:     hamza@kido.com / password123");
 }
 
 main()
