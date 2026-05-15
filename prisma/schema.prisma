@@ -63,6 +63,7 @@ model Child {
   chatMessages           ChatMessage[]
   screenTimeLogs         ScreenTimeLog[]
   progressReports        ProgressReport[]
+  agentTraces            AgentTrace[]
 }
 
 // ─── AI Chat Messages ────────────────────────────────
@@ -284,4 +285,21 @@ model Badge {
   category      String   // streak | quiz | social | learning | special
   requirement   String   // JSON: { type: "streak", value: 7 }
   xpReward      Int      @default(25)
+}
+
+// ─── Agent Trace (Agentic AI Pipeline) ──────────────
+model AgentTrace {
+  id                    String   @id @default(cuid())
+  childId               String
+  sessionId             String   @default(cuid())
+  triggerEvent          String   @default("quiz_submit") // quiz_submit | social_interaction | daily_summary | content_watched
+  agentResults          String   // JSON: array of per-agent results
+  overallConfidence     Float    @default(0.0)
+  fallbackTriggered     Boolean  @default(false)
+  contradictionDetected Boolean  @default(false)
+  finalRecommendations  String   @default("[]") // JSON
+  metadata              String?  // JSON: extra context
+  createdAt             DateTime @default(now())
+
+  child                 Child    @relation(fields: [childId], references: [id])
 }

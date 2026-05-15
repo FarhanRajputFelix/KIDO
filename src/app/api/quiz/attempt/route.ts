@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { calculateLevel } from "@/lib/utils";
+import { runAgentPipeline, AgentContext } from "@/lib/agents";
 
 // POST /api/quiz/attempt - submit a quiz attempt
 export async function POST(req: NextRequest) {
@@ -118,6 +119,49 @@ export async function POST(req: NextRequest) {
           },
         });
       }
+
+      // ── Trigger Agentic AI Pipeline (fire-and-forget) ──────────────
+      // Runs all 11 agents: Learning, Engagement, Behavior, Safety,
+      // Friend Approval, Social Moderation, Parent Insight, Teacher Support,
+      // Progress Analytics, Contradiction Detection, Fallback Recovery
+      const agentContext: AgentContext = {
+        childId,
+        childName: child.name,
+        childAge: child.age,
+        childGrade: child.grade || "Unknown",
+        quizScore: percentage / 100,
+        subject: quiz.subject,
+        difficulty: quiz.difficulty === "hard" ? 8 : quiz.difficulty === "easy" ? 3 : 5,
+        weakAreas: JSON.parse(child.weakSubjects),
+        strongAreas: JSON.parse(child.strongSubjects),
+        totalQuizzes: child.totalQuizzes + 1,
+        avgResponseTimeS: timeTaken ? timeTaken / questions.length : 15,
+        sessionLengthMin: timeTaken ? Math.round(timeTaken / 60) : 10,
+        streakDays: newStreak,
+        level: newLevel,
+        xp: newXP,
+        triggerEvent: "quiz_submit",
+      };
+
+      runAgentPipeline(agentContext).then(async (trace) => {
+        try {
+          await prisma.agentTrace.create({
+            data: {
+              childId,
+              sessionId: trace.sessionId,
+              triggerEvent: "quiz_submit",
+              agentResults: JSON.stringify(trace.agentResults),
+              overallConfidence: trace.overallConfidence,
+              fallbackTriggered: trace.fallbackTriggered,
+              contradictionDetected: trace.contradictionDetected,
+              finalRecommendations: JSON.stringify(trace.finalRecommendations),
+              metadata: JSON.stringify({ quizId, score, percentage, sharedMemory: trace.sharedMemory }),
+            },
+          });
+        } catch (e) {
+          console.error("Agent trace save error:", e);
+        }
+      }).catch(e => console.error("Agent pipeline error:", e));
 
       return NextResponse.json({
         attempt,

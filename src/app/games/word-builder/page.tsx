@@ -8,6 +8,8 @@ interface Puzzle {
   type: string;
   scrambled?: string;
   sentence?: string;
+  question?: string;
+  text?: string;
   answer: string;
   hint: string;
   points: number;
@@ -130,7 +132,7 @@ export default function WordBuilderGame() {
               </div>
             ) : (
               <div className="text-xl font-medium mb-6 leading-relaxed">
-                {puzzle?.sentence}
+                {puzzle?.sentence || puzzle?.question || puzzle?.text || "Fill in the missing word: ___"}
               </div>
             )}
 

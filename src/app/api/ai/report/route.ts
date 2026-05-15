@@ -33,12 +33,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Child not found" }, { status: 404 });
     }
 
+    const safeParse = (str: any) => { try { return str && typeof str === "string" && str.trim().startsWith("[") ? JSON.parse(str) : []; } catch { return []; } };
+
     const childProfile: ChildProfile = {
       name: child.name,
       age: child.age,
       grade: child.grade || "unknown",
-      interests: JSON.parse(child.strongSubjects),
-      weakSubjects: JSON.parse(child.weakSubjects),
+      interests: safeParse(child.strongSubjects),
+      weakSubjects: safeParse(child.weakSubjects),
       level: child.level,
       totalQuizzes: child.totalQuizzes,
     };

@@ -6,6 +6,7 @@ import Link from "next/link";
 
 interface Problem {
   question: string;
+  text?: string;
   options: string[];
   correctAnswer: number;
   points: number;
@@ -61,7 +62,7 @@ export default function MathArenaGame() {
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [timeLeft, isRunning]);
 
-  const problems: Problem[] = gameData?.challenge?.problems || [];
+  const problems: Problem[] = gameData?.challenge?.problems || gameData?.challenge?.questions || [];
 
   const handleSelect = (index: number) => {
     if (showResult) return;
@@ -89,6 +90,19 @@ export default function MathArenaGame() {
           <div className="text-5xl mb-4 animate-float">🧮</div>
           <p className="text-foreground/50 text-lg">AI is creating math challenges...</p>
           <div className="animate-shimmer h-2 w-48 rounded-full mx-auto mt-4"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!loading && problems.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="card text-center max-w-sm">
+          <div className="text-5xl mb-4 text-accent-500 animate-float">⚠️</div>
+          <h2 className="text-xl font-bold mb-2">Oops! Something went wrong.</h2>
+          <p className="text-foreground/50 mb-4">The AI got confused and didn&apos;t build the math questions properly.</p>
+          <button onClick={() => window.location.reload()} className="btn-primary w-full">Try Again 🔄</button>
         </div>
       </div>
     );
@@ -160,7 +174,7 @@ export default function MathArenaGame() {
               <span className="text-sm font-bold text-xp">{problem?.points} pts</span>
             </div>
 
-            <h2 className="text-xl md:text-2xl font-bold mb-8 leading-relaxed">{problem?.question}</h2>
+            <h2 className="text-xl md:text-2xl font-bold mb-8 leading-relaxed">{problem?.question || problem?.text || "Solve the problem shown below!"}</h2>
 
             <div className="grid grid-cols-2 gap-3 mb-4">
               {problem?.options.map((option, i) => (

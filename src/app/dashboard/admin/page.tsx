@@ -26,6 +26,36 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
 
+  // Add teacher state
+  const [showAddTeacher, setShowAddTeacher] = useState(false);
+  const [newTeacher, setNewTeacher] = useState({ name: "", email: "", password: "" });
+  const [addTeacherStatus, setAddTeacherStatus] = useState("");
+
+  const handleAddTeacher = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddTeacherStatus("saving");
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...newTeacher, role: "teacher" }),
+      });
+      if (res.ok) {
+        setAddTeacherStatus("success");
+        setShowAddTeacher(false);
+        setNewTeacher({ name: "", email: "", password: "" });
+        // quickly refetch dashboard to show new teacher
+        const r = await fetch("/api/dashboard");
+        const d = await r.json();
+        setData(d);
+      } else {
+        setAddTeacherStatus("error");
+      }
+    } catch {
+      setAddTeacherStatus("error");
+    }
+  };
+
   useEffect(() => {
     if (status === "authenticated") {
       fetch("/api/dashboard")
@@ -145,7 +175,49 @@ export default function AdminDashboard() {
             {/* Teachers Tab */}
             {activeTab === "teachers" && (
               <div className="animate-slide-up">
-                <h1 className="text-2xl font-bold mb-6">👨‍🏫 Teachers ({data.teachers.length})</h1>
+                <div className="flex items-center justify-between mb-6">
+                  <h1 className="text-2xl font-bold">👨‍🏫 Teachers ({data.teachers.length})</h1>
+                  <button onClick={() => setShowAddTeacher(!showAddTeacher)} className="btn-primary py-2 px-4 text-sm">
+                    {showAddTeacher ? "Cancel" : "+ Add Teacher"}
+                  </button>
+                </div>
+
+                {showAddTeacher && (
+                  <form onSubmit={handleAddTeacher} className="card mb-6 border-2 border-primary-500/20">
+                    <h3 className="font-bold mb-4">Add New Teacher</h3>
+                    {addTeacherStatus === "error" && <p className="text-accent-500 text-sm mb-3">Failed to add teacher.</p>}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <input
+                        className="input"
+                        placeholder="Full Name"
+                        required
+                        value={newTeacher.name}
+                        onChange={e => setNewTeacher({...newTeacher, name: e.target.value})}
+                      />
+                      <input
+                        className="input"
+                        type="email"
+                        placeholder="Email"
+                        required
+                        value={newTeacher.email}
+                        onChange={e => setNewTeacher({...newTeacher, email: e.target.value})}
+                      />
+                      <input
+                        className="input"
+                        type="password"
+                        placeholder="Temporary Password"
+                        required
+                        minLength={6}
+                        value={newTeacher.password}
+                        onChange={e => setNewTeacher({...newTeacher, password: e.target.value})}
+                      />
+                    </div>
+                    <button type="submit" className="btn-primary w-full py-2" disabled={addTeacherStatus === "saving"}>
+                      {addTeacherStatus === "saving" ? "Saving..." : "Create Teacher Account"}
+                    </button>
+                  </form>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {data.teachers.map(t => (
                     <div key={t.id} className="card flex items-center gap-4">

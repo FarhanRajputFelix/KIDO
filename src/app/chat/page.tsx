@@ -59,11 +59,14 @@ export default function ChatPage() {
         body: JSON.stringify({ childId, message: userMsg }),
       });
       const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Failed to chat context");
+      }
       if (data.message) {
         setMessages(prev => [...prev, { role: "assistant", content: data.message.content }]);
       }
     } catch (e) {
-      setMessages(prev => [...prev, { role: "assistant", content: "Oops! Something went wrong. Try again! 😊" }]);
+      setMessages(prev => [...prev, { role: "assistant", content: "Oops! My AI brain is currently thinking about something else. Please try again! 😊" }]);
     }
     setIsTyping(false);
   };
@@ -82,6 +85,7 @@ export default function ChatPage() {
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/`(.*?)`/g, '<code class="chat-inline-code">$1</code>')
+      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-primary-500 hover:underline font-bold" style="text-decoration: underline;">$1</a>')
       .replace(/\n/g, '<br/>');
   };
 

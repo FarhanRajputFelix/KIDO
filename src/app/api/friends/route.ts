@@ -69,6 +69,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Cannot friend yourself" }, { status: 400 });
     }
 
+    // Verify toChild exists
+    const toChild = await prisma.child.findUnique({ where: { id: toChildId } });
+    if (!toChild) {
+      return NextResponse.json({ error: "Friend code not found! Please check for typos." }, { status: 404 });
+    }
+
     // Check if request already exists
     const existing = await prisma.friendRequest.findFirst({
       where: {

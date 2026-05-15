@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 interface Question {
@@ -34,7 +34,6 @@ interface Results {
 
 export default function QuizPlayPage() {
   const params = useParams();
-  const router = useRouter();
   const { data: session } = useSession();
   const [quiz, setQuiz] = useState<QuizData | null>(null);
   const [currentQ, setCurrentQ] = useState(0);
@@ -60,20 +59,21 @@ export default function QuizPlayPage() {
       });
   }, [params.id]);
 
-  // Get child ID
+  // Get valid child ID
   useEffect(() => {
     if (session?.user) {
-      fetch("/api/children")
+      fetch("/api/dashboard")
         .then((r) => r.json())
         .then((d) => {
-          if (d.children?.length > 0) setChildId(d.children[0].id);
+          const child = d.child || d.children?.[0];
+          if (child) setChildId(child.id);
         });
     }
   }, [session]);
 
   // Timer
   useEffect(() => {
-    if (!started || showResult) return;
+    if (!started || showResult || submitting) return;
     if (timeLeft <= 0) {
       handleSubmit();
       return;
@@ -81,7 +81,7 @@ export default function QuizPlayPage() {
     const t = setTimeout(() => setTimeLeft((p) => p - 1), 1000);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [started, timeLeft, showResult]);
+  }, [started, timeLeft, showResult, submitting]);
 
   const handleSubmit = useCallback(async () => {
     if (!quiz || !childId || submitting) return;
@@ -270,9 +270,18 @@ export default function QuizPlayPage() {
           <span className="text-sm font-medium">
             Question {currentQ + 1} of {quiz.questions.length}
           </span>
-          <span className={`text-sm font-bold ${timeLeft <= 30 ? "text-accent-500 animate-streak" : ""}`}>
-            ⏱ {minutes}:{seconds.toString().padStart(2, "0")}
-          </span>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={handleSubmit} 
+              disabled={submitting}
+              className="px-3 py-1 rounded-lg bg-warning-500/10 text-warning-500 text-xs font-bold hover:bg-warning-500/20 transition-colors"
+            >
+              End Early ⏹️
+            </button>
+            <span className={`text-sm font-bold ${timeLeft <= 30 ? "text-accent-500 animate-streak" : ""}`}>
+              ⏱ {minutes}:{seconds.toString().padStart(2, "0")}
+            </span>
+          </div>
         </div>
         <div className="max-w-2xl mx-auto">
           <div className="xp-bar-track h-2">

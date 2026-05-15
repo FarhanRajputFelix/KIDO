@@ -149,11 +149,13 @@ RULES:
 - Be enthusiastic, encouraging, and patient
 - Use emojis to make responses fun 🎉
 - When explaining concepts, use analogies kids can relate to
+- Provide step-by-step tutoring. If they are stuck on a topic, DO NOT just give the answer. Guide them, teach them step-by-step!
+- IMPORTANT: When they struggle or want to learn a new topic, show them a video! Format it exactly as: [Watch video: X](https://www.youtube.com/results?search_query=educational+video+for+kids+about+X)
+- IMPORTANT: Provide a drawing or visual representation when helpful using emojis or simple text diagrams. Make it colorful and kid-friendly if possible.
 - If they ask about math, show step-by-step solutions
 - If they ask about science, include fun facts
 - For coding questions, show simple code examples
-- Include visual descriptions when helpful (describe diagrams, charts)
-- Keep responses concise but thorough
+- Keep responses engaging but thorough
 - Never use complex jargon without explanation
 - Encourage curiosity and further exploration`;
 
@@ -176,57 +178,38 @@ export async function generateGameChallenge(
   const model = getModel();
 
   const prompts: Record<string, string> = {
-    "word-builder": `You are a word game AI for kids. Create a word puzzle for ${childProfile.name} (age ${childProfile.age}, ${childProfile.grade} grade).
+    "word-builder": `You are a highly creative word game AI for kids. Create a UNIQUE word puzzle for ${childProfile.name} (age ${childProfile.age}, ${childProfile.grade} grade).
 Their interests: ${childProfile.interests.join(", ") || "general"}.
 
-Generate a word challenge. Return ONLY valid JSON (no markdown):
+CRITICAL INSTRUCTION: GENERATE COMPLETELY NEW QUESTIONS EVERY TIME. DO NOT USE THE EXAMPLES AS FINAL OUTPUT. Be extremely creative and match their interests.
+
+Return ONLY valid JSON (no markdown):
 {
   "type": "word-builder",
   "challenge": {
-    "title": "Fun title",
+    "title": "Fun unique title",
     "instructions": "Clear kid-friendly instructions",
     "puzzles": [
       {
         "type": "anagram",
-        "scrambled": "CESINEC",
-        "answer": "SCIENCE",
-        "hint": "A subject about the world around us",
+        "scrambled": "SCRAMBLED_WORD", 
+        "answer": "WORD",
+        "hint": "A helpful hint",
         "points": 10
       },
       {
         "type": "fill-blank",
-        "sentence": "The ___ orbits around the Earth.",
-        "answer": "Moon",
-        "hint": "You can see it at night",
-        "points": 10
-      },
-      {
-        "type": "anagram",
-        "scrambled": "THMA",
-        "answer": "MATH",
-        "hint": "Numbers and calculations",
-        "points": 10
-      },
-      {
-        "type": "fill-blank",
-        "sentence": "Water freezes at ___ degrees Celsius.",
-        "answer": "0",
-        "hint": "It's a round number",
-        "points": 15
-      },
-      {
-        "type": "anagram",
-        "scrambled": "RAEHT",
-        "answer": "EARTH",
-        "hint": "Our home planet",
+        "question": "The sentence with a blank here: ___ .",
+        "answer": "Answer",
+        "hint": "Hint here",
         "points": 10
       }
     ],
-    "totalPoints": 55,
+    "totalPoints": 50,
     "xpReward": 30
   }
 }
-Make puzzles themed around their interests. Adjust difficulty for their age/grade.`,
+Important: Make sure to provide 5 puzzles. Make them 100% unique! Use the exact keys shown (like "question" for fill-blank)!`,
 
     "story-creator": `You are a creative story AI for kids. Create a story prompt for ${childProfile.name} (age ${childProfile.age}, ${childProfile.grade} grade).
 Their interests: ${childProfile.interests.join(", ") || "adventure"}.
@@ -237,19 +220,19 @@ Return ONLY valid JSON (no markdown):
   "type": "story-creator",
   "challenge": {
     "title": "Story title",
-    "storyStart": "An engaging 2-3 paragraph story opening themed around their interests...",
+    "storyPart": "${context ? "The NEXT 2-3 paragraphs. DO NOT repeat the old story." : "An engaging 2-3 paragraph story opening themed around their interests..."}",
     "prompt": "What should happen next? Choose one or write your own!",
     "choices": [
-      "Choice A - an exciting option",
-      "Choice B - a mysterious option",
-      "Choice C - a funny option"
+      "Choice A - exciting option",
+      "Choice B - mysterious option",
+      "Choice C - funny option"
     ],
-    "vocabulary": ["word1", "word2", "word3"],
-    "writingTip": "A helpful writing tip for the child",
+    "vocabulary": ["word1", "word2"],
+    "writingTip": "A helpful writing tip",
     "xpReward": 25
   }
 }
-Theme the story around their interests. Make it age-appropriate and exciting.`,
+CRITICAL: You MUST use the exact key "storyPart" for the story text. Do not use any other key.`,
 
     "math-arena": `You are a math game AI for kids. Create math challenges for ${childProfile.name} (age ${childProfile.age}, ${childProfile.grade} grade).
 Their math level based on grade: ${childProfile.grade}.

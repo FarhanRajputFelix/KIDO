@@ -27,7 +27,14 @@ export default function TeacherDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [generatingQuiz, setGeneratingQuiz] = useState(false);
+  const [generateFeedback, setGenerateFeedback] = useState("");
   const [quizSubject, setQuizSubject] = useState("math");
+
+  // Classroom Management
+  const [newClassroomName, setNewClassroomName] = useState("");
+  const [newClassroomSubject, setNewClassroomSubject] = useState("");
+  const [creatingClassroom, setCreatingClassroom] = useState(false);
+  const [classroomFeedback, setClassroomFeedback] = useState("");
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -40,6 +47,7 @@ export default function TeacherDashboard() {
 
   const handleGenerateQuiz = async (childId: string) => {
     setGeneratingQuiz(true);
+    setGenerateFeedback("");
     try {
       const res = await fetch("/api/ai/quiz", {
         method: "POST",
@@ -48,10 +56,38 @@ export default function TeacherDashboard() {
       });
       if (res.ok) {
         const data = await res.json();
-        alert(`Quiz "${data.quiz.title}" generated successfully! 🎯`);
+        setGenerateFeedback(`Success! Quiz "${data.quiz?.title || "New Quiz"}" generated for the student. 🎯`);
+      } else {
+        setGenerateFeedback("Failed to generate quiz. ❌");
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      setGenerateFeedback("Error generating quiz. ❌");
+    }
     setGeneratingQuiz(false);
+  };
+
+  const handleCreateClassroom = async () => {
+    if (!newClassroomName) return;
+    setCreatingClassroom(true);
+    setClassroomFeedback("");
+    try {
+      const res = await fetch("/api/classrooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newClassroomName, subject: newClassroomSubject, grade: "All Grades" })
+      });
+      if (res.ok) {
+        setClassroomFeedback("Classroom created successfully!");
+        setNewClassroomName("");
+        setNewClassroomSubject("");
+        window.location.reload();
+      } else {
+        setClassroomFeedback("Failed to create classroom.");
+      }
+    } catch {
+      setClassroomFeedback("Error creating classroom.");
+    }
+    setCreatingClassroom(false);
   };
 
   if (status === "loading" || loading) {
@@ -122,7 +158,20 @@ export default function TeacherDashboard() {
             {/* Overview */}
             {activeTab === "overview" && (
               <div className="animate-slide-up">
-                <h1 className="text-2xl font-bold mb-6">👨‍🏫 Teacher Dashboard</h1>
+                
+                {/* Teacher Profile Display */}
+                <div className="flex items-center gap-6 mb-8 p-6 card card-glow rounded-2xl">
+                  <div className="text-6xl bg-primary-500/10 p-5 rounded-full border-4 border-primary-500/20">👨‍🏫</div>
+                  <div>
+                    <h2 className="text-3xl font-extrabold mb-1">
+                      <span className="gradient-text">{session?.user?.name || "Teacher Profile"}</span>
+                    </h2>
+                    <p className="text-foreground/50 font-medium">KIDO Certified Educator</p>
+                    <p className="mt-2 text-sm font-mono opacity-60 bg-foreground/5 inline-block px-2 py-1 rounded">
+                      {session?.user?.email}
+                    </p>
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-3 gap-4 mb-8 stagger-children">
                   <div className="card text-center" style={{ borderTop: "3px solid #10b981" }}>
@@ -241,7 +290,40 @@ export default function TeacherDashboard() {
             {/* Classrooms Tab */}
             {activeTab === "classrooms" && (
               <div className="animate-slide-up">
-                <h1 className="text-2xl font-bold mb-6">🏫 My Classrooms</h1>
+                <div className="flex items-center justify-between mb-6">
+                  <h1 className="text-2xl font-bold">🏫 My Classrooms</h1>
+                </div>
+
+                <div className="card mb-8">
+                  <h3 className="font-bold mb-4">＋ Create New Classroom</h3>
+                  {classroomFeedback && (
+                    <div className={`mb-4 p-3 rounded-lg text-sm font-bold border ${classroomFeedback.includes("Error") || classroomFeedback.includes("Failed") ? "bg-accent-500/10 text-accent-500 border-accent-500/20" : "bg-primary-500/10 text-primary-500 border-primary-500/20"}`}>
+                      {classroomFeedback}
+                    </div>
+                  )}
+                  <div className="flex flex-col md:flex-row gap-3">
+                    <input 
+                      placeholder="Classroom Name (e.g. Mrs. Smith 3rd Grade)" 
+                      className="input flex-1" 
+                      value={newClassroomName} 
+                      onChange={e => setNewClassroomName(e.target.value)} 
+                    />
+                    <input 
+                      placeholder="Subject (e.g. Science)" 
+                      className="input flex-1" 
+                      value={newClassroomSubject} 
+                      onChange={e => setNewClassroomSubject(e.target.value)} 
+                    />
+                    <button 
+                      className="btn-primary flex-shrink-0" 
+                      onClick={handleCreateClassroom} 
+                      disabled={creatingClassroom || !newClassroomName}
+                    >
+                      {creatingClassroom ? "Creating..." : "Create Class"}
+                    </button>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {data.classrooms?.map((c: any) => (
                     <div key={c.id} className="card">
@@ -287,6 +369,11 @@ export default function TeacherDashboard() {
                   </div>
 
                   <h3 className="font-bold mb-4">Select Student</h3>
+                  {generateFeedback && (
+                    <div className="mb-4 p-3 rounded-lg text-sm font-bold bg-primary-500/10 text-primary-500 border border-primary-500/20">
+                      {generateFeedback}
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {data.students?.map((s: Student) => (
                       <button

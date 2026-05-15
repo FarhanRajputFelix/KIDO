@@ -165,6 +165,7 @@ export default function ParentDashboard() {
               { id: "friends", icon: "👥", label: "Friends" },
               { id: "reports", icon: "📋", label: "AI Reports" },
               { id: "screen-time", icon: "⏱️", label: "Screen Time" },
+              { id: "agents", icon: "🧠", label: "AI Agents" },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -274,7 +275,7 @@ export default function ParentDashboard() {
 
                 {/* Mobile Tab Selector */}
                 <div className="flex gap-2 mb-6 overflow-x-auto md:hidden">
-                  {["overview", "alerts", "friends", "reports", "screen-time"].map(tab => (
+                  {["overview", "alerts", "friends", "reports", "screen-time", "agents"].map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
                       className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap ${activeTab === tab ? "bg-primary-500 text-white" : "bg-[var(--card)] border border-[var(--card-border)]"}`}
                       style={{ border: activeTab === tab ? "none" : undefined }}>
@@ -511,6 +512,74 @@ export default function ParentDashboard() {
                             </div>
                           </div>
                         )) || <p className="text-sm text-foreground/40">No screen time data yet</p>}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* AI Agents Tab */}
+                {activeTab === "agents" && (
+                  <div className="animate-slide-up">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xl font-bold flex items-center gap-2"><span>🧠</span> AI Agent Intelligence</h2>
+                    </div>
+                    <div className="card card-glow mb-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="text-4xl">🤖</div>
+                        <div>
+                          <h3 className="font-bold text-lg">Antigravity Multi-Agent System</h3>
+                          <p className="text-sm text-foreground/50">11 autonomous AI agents continuously monitoring {activeChild.name}&apos;s learning journey</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                        <div className="p-3 rounded-xl bg-[var(--background)] text-center">
+                          <div className="text-lg">🧠</div>
+                          <div className="text-xs font-bold mt-1">Learning</div>
+                          <div className="text-[10px] text-foreground/40">Adaptive Difficulty</div>
+                        </div>
+                        <div className="p-3 rounded-xl bg-[var(--background)] text-center">
+                          <div className="text-lg">🛡️</div>
+                          <div className="text-xs font-bold mt-1">Safety</div>
+                          <div className="text-[10px] text-foreground/40">Content Moderation</div>
+                        </div>
+                        <div className="p-3 rounded-xl bg-[var(--background)] text-center">
+                          <div className="text-lg">⚠️</div>
+                          <div className="text-xs font-bold mt-1">Contradiction</div>
+                          <div className="text-[10px] text-foreground/40">Signal Validation</div>
+                        </div>
+                        <div className="p-3 rounded-xl bg-[var(--background)] text-center">
+                          <div className="text-lg">🔄</div>
+                          <div className="text-xs font-bold mt-1">Fallback</div>
+                          <div className="text-[10px] text-foreground/40">Recovery System</div>
+                        </div>
+                      </div>
+                      <a href="/agents" className="btn-primary w-full text-center no-underline block" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+                        🚀 Open Agent Trace Visualization
+                      </a>
+                    </div>
+                    <div className="card">
+                      <h3 className="font-bold mb-3">How It Works</h3>
+                      <div className="space-y-2 text-sm text-foreground/70">
+                        <div className="flex items-start gap-3 p-3 rounded-xl bg-[var(--background)]">
+                          <span>1️⃣</span>
+                          <span>{activeChild.name} submits a quiz or interacts with the platform</span>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 rounded-xl bg-[var(--background)]">
+                          <span>2️⃣</span>
+                          <span>11 AI agents analyze the interaction simultaneously</span>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 rounded-xl bg-[var(--background)]">
+                          <span>3️⃣</span>
+                          <span>Contradiction Detection validates all agent signals for consistency</span>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 rounded-xl bg-[var(--background)]">
+                          <span>4️⃣</span>
+                          <span>Fallback Agent recovers from any failures or low-confidence outputs</span>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 rounded-xl bg-[var(--background)]">
+                          <span>5️⃣</span>
+                          <span>Full reasoning trace saved — every AI decision is explainable</span>
+                        </div>
                       </div>
                     </div>
                   </div>

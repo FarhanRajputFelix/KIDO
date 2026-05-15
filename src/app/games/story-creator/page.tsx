@@ -31,7 +31,8 @@ export default function StoryCreatorGame() {
               .then(r => r.json())
               .then(g => {
                 setGameData(g.game);
-                setStoryParts([g.game?.challenge?.storyStart || ""]);
+                const start = g.game?.challenge?.storyPart || g.game?.challenge?.storyStart || g.game?.challenge?.text || "Let's begin a story...";
+                setStoryParts([start]);
                 setLoading(false);
               })
               .catch(() => setLoading(false));
@@ -65,9 +66,10 @@ export default function StoryCreatorGame() {
         }),
       });
       const data = await res.json();
-      if (data.game?.challenge?.storyStart) {
+      const newPart = data.game?.challenge?.storyPart || data.game?.challenge?.storyStart || data.game?.challenge?.text;
+      if (newPart) {
         setGameData(data.game);
-        setStoryParts(prev => [...prev, data.game.challenge.storyStart]);
+        setStoryParts(prev => [...prev, newPart]);
       }
     } catch (e) {
       console.error(e);

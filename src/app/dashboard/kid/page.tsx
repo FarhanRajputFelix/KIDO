@@ -10,6 +10,16 @@ export default function KidDashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // Friend Request State
+  const [friendCode, setFriendCode] = useState("");
+  const [friendStatus, setFriendStatus] = useState("");
+  const [showAddFriend, setShowAddFriend] = useState(false);
+
+  // Classroom Join State
+  const [joinCode, setJoinCode] = useState("");
+  const [joinStatus, setJoinStatus] = useState("");
+  const [showJoinClass, setShowJoinClass] = useState(false);
+
   useEffect(() => {
     if (status === "authenticated") {
       fetch("/api/dashboard")
@@ -49,6 +59,50 @@ export default function KidDashboard() {
   const friends = data?.friendsProgress || [];
   const screenTime = data?.todayScreenTime?.minutes || 0;
 
+  const handleAddFriend = async () => {
+    if (!friendCode) return;
+    setFriendStatus("Sending...");
+    try {
+      const res = await fetch("/api/friends", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fromChildId: child.id, toChildId: friendCode.trim() })
+      });
+      if (res.ok) {
+        setFriendStatus("Request sent! Ask your parent to approve it.");
+        setFriendCode("");
+        setTimeout(() => setShowAddFriend(false), 3000);
+      } else {
+        const d = await res.json();
+        setFriendStatus(d.error || "Failed to add friend");
+      }
+    } catch {
+      setFriendStatus("Error adding friend.");
+    }
+  };
+
+  const handleJoinClassroom = async () => {
+    if (!joinCode) return;
+    setJoinStatus("Joining...");
+    try {
+      const res = await fetch("/api/classrooms/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ childId: child.id, joinCode: joinCode.trim() })
+      });
+      if (res.ok) {
+        setJoinStatus("Successfully joined classroom! 🎉");
+        setJoinCode("");
+        setTimeout(() => setShowJoinClass(false), 3000);
+      } else {
+        const d = await res.json();
+        setJoinStatus(d.error || "Failed to join classroom");
+      }
+    } catch {
+      setJoinStatus("Error joining classroom.");
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Fun Top Navbar */}
@@ -61,6 +115,7 @@ export default function KidDashboard() {
         </div>
         <div className="flex items-center gap-3">
           <Link href="/chat" className="btn-primary py-2 px-4 text-sm no-underline">💬 Ask AI</Link>
+          <Link href="/agents" className="btn-primary py-2 px-4 text-sm no-underline" style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>🧠 AI Trace</Link>
           <Link href="/games" className="btn-accent py-2 px-4 text-sm no-underline">🎮 Games</Link>
           <Link href="/quiz" className="btn-secondary py-2 px-4 text-sm no-underline">🎯 Quiz</Link>
           <button onClick={() => signOut({ callbackUrl: "/" })} className="btn-secondary py-2 px-4 text-sm">🚪</button>
@@ -177,9 +232,65 @@ export default function KidDashboard() {
               <Link href="/achievements" className="btn-secondary w-full mt-3 text-sm no-underline">View All →</Link>
             </div>
 
+            {/* Classrooms */}
+            <div className="card mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold flex items-center gap-2"><span className="text-xl">🏫</span> My Classrooms</h3>
+                <button onClick={() => setShowJoinClass(!showJoinClass)} className="btn-primary py-1 px-3 text-xs bg-accent-500 hover:bg-accent-600">
+                  {showJoinClass ? "Cancel" : "Join Code"}
+                </button>
+              </div>
+              
+              {showJoinClass && (
+                <div className="mb-4 p-3 rounded-xl bg-[var(--background)] animate-slide-up border border-accent-500/20">
+                  <p className="text-xs text-foreground/50 mb-2">Get your Join Code from your Teacher!</p>
+                  {joinStatus && (
+                    <div className={`text-xs font-bold mb-2 ${joinStatus.includes("Error") || joinStatus.includes("Failed") || joinStatus.includes("already") ? "text-accent-500" : "text-success-500"}`}>
+                      {joinStatus}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <input 
+                      className="input flex-1 py-1.5 px-3 text-sm font-mono uppercase" 
+                      placeholder="e.g. AXB3R" 
+                      value={joinCode}
+                      onChange={e => setJoinCode(e.target.value.toUpperCase())}
+                    />
+                    <button onClick={handleJoinClassroom} className="btn-primary py-1.5 px-3 text-xs bg-accent-500 hover:bg-accent-600">Join Room</button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Friends */}
             <div className="card">
-              <h3 className="font-bold mb-4 flex items-center gap-2"><span className="text-xl">👥</span> Friends</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold flex items-center gap-2"><span className="text-xl">👥</span> Friends</h3>
+                <button onClick={() => setShowAddFriend(!showAddFriend)} className="btn-primary py-1 px-3 text-xs">
+                  {showAddFriend ? "Cancel" : "+ Add Friend"}
+                </button>
+              </div>
+
+              {showAddFriend && (
+                <div className="mb-4 p-3 rounded-xl bg-[var(--background)] animate-slide-up border border-primary-500/20">
+                  <p className="text-xs text-foreground/50 mb-2">Your Friend Code: <strong className="text-foreground">{child.id}</strong></p>
+                  {friendStatus && (
+                    <div className={`text-xs font-bold mb-2 ${friendStatus.includes("Error") || friendStatus.includes("Failed") || friendStatus.includes("Cannot") ? "text-accent-500" : "text-success-500"}`}>
+                      {friendStatus}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <input 
+                      className="input flex-1 py-1.5 px-3 text-sm" 
+                      placeholder="Enter Friend's Code" 
+                      value={friendCode}
+                      onChange={e => setFriendCode(e.target.value)}
+                    />
+                    <button onClick={handleAddFriend} className="btn-primary py-1.5 px-3 text-xs">Send</button>
+                  </div>
+                </div>
+              )}
+
               {friends.length > 0 ? (
                 <div className="space-y-2">
                   {friends.map((f: any) => (
