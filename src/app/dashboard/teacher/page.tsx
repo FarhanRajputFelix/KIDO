@@ -60,7 +60,7 @@ export default function TeacherDashboard() {
       } else {
         setGenerateFeedback("Failed to generate quiz. ❌");
       }
-    } catch (e) {
+    } catch {
       setGenerateFeedback("Error generating quiz. ❌");
     }
     setGeneratingQuiz(false);
@@ -102,7 +102,7 @@ export default function TeacherDashboard() {
   }
 
   if (!data) return null;
-  const activeStudent: Student | undefined = data.students?.find((s: Student) => s.id === selectedStudent);
+  const _activeStudent: Student | undefined = data.students?.find((s: Student) => s.id === selectedStudent);
 
   const SUBJECTS = [
     { id: "math", name: "Math", icon: "🧮", color: "#6366f1" },

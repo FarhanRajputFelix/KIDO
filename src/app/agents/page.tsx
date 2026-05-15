@@ -75,7 +75,7 @@ const SYSTEM_LABELS: Record<string, { name: string; color: string }> = {
   FallbackRecoveryAgent: { name: "Reliability", color: "#f97316" },
 };
 
-const AGENT_LIFECYCLE: string[] = ["WAITING", "RUNNING", "ANALYZING", "COMPLETED"];
+const _AGENT_LIFECYCLE: string[] = ["WAITING", "RUNNING", "ANALYZING", "COMPLETED"];
 
 function confidenceColor(conf: number): string {
   if (conf >= 0.80) return "#10b981";

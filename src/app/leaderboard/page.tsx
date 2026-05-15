@@ -72,7 +72,7 @@ export default function LeaderboardPage() {
             {/* Top 3 Podium */}
             {players.length >= 3 && (
               <div className="grid grid-cols-3 gap-4 mb-8 stagger-children">
-                {[players[1], players[0], players[2]].map((player, idx) => {
+                {[players[1], players[0], players[2]].map((player) => {
                   const rank = player.rank;
                   const rs = getRankStyle(rank);
                   const isFirst = rank === 1;

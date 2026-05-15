@@ -6,7 +6,7 @@ import Link from "next/link";
 import { formatXP, xpProgress } from "@/lib/utils";
 
 export default function KidDashboard() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -57,7 +57,7 @@ export default function KidDashboard() {
   const progress = xpProgress(child.xp);
   const childBadges = JSON.parse(child.badges);
   const friends = data?.friendsProgress || [];
-  const screenTime = data?.todayScreenTime?.minutes || 0;
+  const _screenTime = data?.todayScreenTime?.minutes || 0;
 
   const handleAddFriend = async () => {
     if (!friendCode) return;

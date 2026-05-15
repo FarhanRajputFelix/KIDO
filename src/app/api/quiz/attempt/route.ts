@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       const newLongestStreak = Math.max(child.longestStreak, newStreak);
 
       // Check for new badges
-      const currentBadges = JSON.parse(child.badges);
+      const _currentBadges = JSON.parse(child.badges);
       const isPerfect = score === questions.length;
 
       await prisma.child.update({

@@ -12,7 +12,7 @@ interface Message {
 }
 
 export default function ChatPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -65,7 +65,7 @@ export default function ChatPage() {
       if (data.message) {
         setMessages(prev => [...prev, { role: "assistant", content: data.message.content }]);
       }
-    } catch (e) {
+    } catch {
       setMessages(prev => [...prev, { role: "assistant", content: "Oops! My AI brain is currently thinking about something else. Please try again! 😊" }]);
     }
     setIsTyping(false);

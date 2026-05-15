@@ -88,7 +88,7 @@ export default function EventFeed({ childId, maxEvents = 12 }: { childId?: strin
       // Parse traces into events
       if (traceData.traces) {
         for (const trace of traceData.traces.slice(0, 5)) {
-          const warnings = trace.agentResults?.filter((r: any) => r.confidence < 0.7) || [];
+          const _warnings = trace.agentResults?.filter((r: any) => r.confidence < 0.7) || [];
           const actions = trace.agentResults?.flatMap((r: any) => r.actionsTriggered || []) || [];
           
           aiEvents.push({
