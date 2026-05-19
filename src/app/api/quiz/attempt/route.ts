@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getMobileSession } from "@/lib/mobile-auth";
 import { calculateLevel } from "@/lib/utils";
 import { runAgentPipeline, AgentContext } from "@/lib/agents";
 
 // POST /api/quiz/attempt - submit a quiz attempt
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getMobileSession(req);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -1,73 +1,68 @@
 import 'package:flutter/foundation.dart';
 import '../core/api_client.dart';
+import '../models/child.dart';
 
 class ChildProvider extends ChangeNotifier {
-  Map<String, dynamic>? _profile;
-  List<dynamic> _leaderboard = [];
-  List<dynamic> _activities = [];
-  List<dynamic> _friends = [];
-  List<dynamic> _friendLeaderboard = [];
-  List<dynamic> _gameHistory = [];
+  List<Child> _children = [];
+  Child? _selectedChild;
   bool _isLoading = false;
+  String? _error;
 
-  Map<String, dynamic>? get profile => _profile;
-  List<dynamic> get leaderboard => _leaderboard;
-  List<dynamic> get activities => _activities;
-  List<dynamic> get friends => _friends;
-  List<dynamic> get friendLeaderboard => _friendLeaderboard;
-  List<dynamic> get gameHistory => _gameHistory;
+  List<Child> get children => _children;
+  Child? get selectedChild => _selectedChild;
   bool get isLoading => _isLoading;
-  int get xp => (_profile?['xp'] as int?) ?? 0;
-  int get level => (_profile?['level'] as int?) ?? 1;
-  int get streakDays => (_profile?['streak_days'] as int?) ?? 0;
+  String? get error => _error;
 
   final ApiClient _api = ApiClient();
 
-  Future<void> loadProfile() async {
+  Future<void> loadChildren() async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
     try {
-      _profile = await _api.getMyChildProfile();
-    } catch (_) {}
+      final list = await _api.getChildren();
+      _children = list.map((e) => Child.fromJson(e as Map<String, dynamic>)).toList();
+      if (_children.isNotEmpty && _selectedChild == null) {
+        _selectedChild = _children.first;
+      }
+    } catch (e) {
+      _error = 'Failed to load children';
+    }
     _isLoading = false;
     notifyListeners();
   }
 
-  Future<void> loadLeaderboard() async {
-    try {
-      _leaderboard = await _api.getGlobalLeaderboard();
-      notifyListeners();
-    } catch (_) {}
+  void selectChild(Child child) {
+    _selectedChild = child;
+    notifyListeners();
   }
 
-  Future<void> loadFriends() async {
+  Future<bool> createChild({
+    required String name,
+    required int age,
+    String? grade,
+  }) async {
     try {
-      _friends = await _api.getFriends();
-      _friendLeaderboard = await _api.getFriendLeaderboard();
+      final result = await _api.createChild({
+        'name': name,
+        'age': age,
+        if (grade != null) 'grade': grade,
+      });
+      final child = Child.fromJson(result['child'] as Map<String, dynamic>);
+      _children.add(child);
+      _selectedChild ??= child;
       notifyListeners();
-    } catch (_) {}
-  }
-
-  Future<void> loadActivityFeed() async {
-    try {
-      _activities = await _api.getActivityFeed();
-      notifyListeners();
-    } catch (_) {}
-  }
-
-  Future<void> loadGameHistory() async {
-    try {
-      _gameHistory = await _api.getGameHistory();
-      notifyListeners();
-    } catch (_) {}
-  }
-
-  Future<bool> sendFriendRequest(String username, String category) async {
-    try {
-      await _api.sendFriendRequest(username, category);
       return true;
     } catch (_) {
       return false;
     }
+  }
+
+  void loadFromDashboard(List<dynamic> childrenJson) {
+    _children = childrenJson
+        .map((e) => Child.fromJson(e as Map<String, dynamic>))
+        .toList();
+    if (_children.isNotEmpty) _selectedChild ??= _children.first;
+    notifyListeners();
   }
 }

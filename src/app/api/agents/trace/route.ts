@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getMobileSession } from "@/lib/mobile-auth";
 import { runAgentPipeline, AgentContext } from "@/lib/agents";
 
 // POST /api/agents/trace — Run all agents and save trace
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getMobileSession(req);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
 // GET /api/agents/trace?childId=xxx — Fetch traces for a child
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getMobileSession(req);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

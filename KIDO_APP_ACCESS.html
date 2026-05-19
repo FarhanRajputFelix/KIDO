@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>KIDO App - Scan to Open</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #6C63FF; color: white; text-align: center; padding: 40px; margin: 0; }
+    .card { background: white; color: #333; border-radius: 24px; padding: 32px; max-width: 400px; margin: 0 auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    h1 { color: #6C63FF; font-size: 2.5em; margin: 0 0 8px 0; }
+    .subtitle { color: #888; margin-bottom: 24px; }
+    #qrcode { margin: 20px auto; }
+    .url { background: #f0eeff; border-radius: 12px; padding: 12px 20px; font-size: 1.1em; font-weight: bold; color: #6C63FF; word-break: break-all; margin: 16px 0; }
+    .accounts { text-align: left; background: #f9f9f9; border-radius: 12px; padding: 16px 20px; margin-top: 16px; }
+    .accounts h3 { margin: 0 0 12px 0; color: #6C63FF; }
+    .account { margin: 6px 0; font-size: 0.9em; }
+    .role { display: inline-block; background: #6C63FF; color: white; border-radius: 6px; padding: 2px 8px; font-size: 0.8em; margin-right: 8px; }
+    .instructions { margin-top: 20px; font-size: 0.9em; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🚀 KIDO</h1>
+    <div class="subtitle">Safe. Smart. Fun.</div>
+    <div id="qrcode"></div>
+    <div class="url" id="appUrl">http://10.113.198.141:8080</div>
+    <div class="accounts">
+      <h3>Demo Accounts (password: password123)</h3>
+      <div class="account"><span class="role">Parent</span>parent@kido.com</div>
+      <div class="account"><span class="role">Teacher</span>teacher@kido.com</div>
+      <div class="account"><span class="role">Kid</span>aiza@kido.com</div>
+      <div class="account"><span class="role">Kid</span>hamza@kido.com</div>
+    </div>
+    <div class="instructions">
+      📱 Make sure your phone is on the <strong>same WiFi</strong> as this computer.<br>
+      Scan the QR code or type the URL in your phone's browser.
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    var url = document.getElementById('appUrl').innerText;
+    new QRCode(document.getElementById("qrcode"), {
+      text: url, width: 200, height: 200,
+      colorDark: "#6C63FF", colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  </script>
+</body>
+</html>

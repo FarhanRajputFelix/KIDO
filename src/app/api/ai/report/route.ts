@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getMobileSession } from "@/lib/mobile-auth";
 import { generateProgressReport, ChildProfile } from "@/lib/gemini";
 
 // POST /api/ai/report — Generate AI progress report for a child
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getMobileSession(req);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
 // GET /api/ai/report?childId=xxx — Get existing reports
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getMobileSession(req);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

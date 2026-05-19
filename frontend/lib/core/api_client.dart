@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../core/constants.dart';
+import 'constants.dart';
 
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
@@ -11,8 +11,8 @@ class ApiClient {
   ApiClient._internal() {
     _dio = Dio(BaseOptions(
       baseUrl: KidoConstants.baseUrl,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 15),
+      connectTimeout: const Duration(seconds: 20),
+      receiveTimeout: const Duration(seconds: 30),
       headers: {'Content-Type': 'application/json'},
     ));
 
@@ -25,125 +25,149 @@ class ApiClient {
         }
         return handler.next(options);
       },
-      onError: (error, handler) {
-        return handler.next(error);
-      },
+      onError: (error, handler) => handler.next(error),
     ));
   }
 
-  Dio get dio => _dio;
-
-  // ── Auth ──────────────────────────────────────────────────────────────────
-  Future<Map<String, dynamic>> login(String email, String password) async {
-    final response = await _dio.post('/auth/login', data: {
-      'username': email,
-      'password': password,
-    }, options: Options(contentType: 'application/x-www-form-urlencoded'));
-    return response.data as Map<String, dynamic>;
+  // ── Auth ───────────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> mobileLogin(String email, String password) async {
+    final res = await _dio.post(KidoConstants.mobileLoginPath,
+        data: {'email': email, 'password': password});
+    return res.data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> register(Map<String, dynamic> data) async {
-    final response = await _dio.post('/auth/register', data: data);
-    return response.data as Map<String, dynamic>;
+  Future<Map<String, dynamic>> mobileRegister(
+      String email, String password, String name, String role) async {
+    final res = await _dio.post(KidoConstants.mobileRegisterPath,
+        data: {'email': email, 'password': password, 'name': name, 'role': role});
+    return res.data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> getMe() async {
-    final response = await _dio.get('/auth/me');
-    return response.data as Map<String, dynamic>;
+  // ── Dashboard ──────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> getDashboard() async {
+    final res = await _dio.get('/api/dashboard');
+    return res.data as Map<String, dynamic>;
   }
 
   // ── Children ──────────────────────────────────────────────────────────────
-  Future<Map<String, dynamic>> getMyChildProfile() async {
-    final response = await _dio.get('/children/me/profile');
-    return response.data as Map<String, dynamic>;
+  Future<List<dynamic>> getChildren() async {
+    final res = await _dio.get('/api/children');
+    return res.data as List<dynamic>;
   }
 
-  Future<List<dynamic>> getGlobalLeaderboard() async {
-    final response = await _dio.get('/children/leaderboard/global');
-    return response.data as List<dynamic>;
+  Future<Map<String, dynamic>> createChild(Map<String, dynamic> data) async {
+    final res = await _dio.post('/api/children/manage', data: data);
+    return res.data as Map<String, dynamic>;
   }
 
-  // ── Content ───────────────────────────────────────────────────────────────
-  Future<List<dynamic>> getContent({String? category, String? type}) async {
+  Future<Map<String, dynamic>> updateChild(Map<String, dynamic> data) async {
+    final res = await _dio.put('/api/children/manage', data: data);
+    return res.data as Map<String, dynamic>;
+  }
+
+  // ── AI Chat ────────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> sendChatMessage(String childId, String message) async {
+    final res = await _dio.post('/api/ai/chat', data: {'childId': childId, 'message': message});
+    return res.data as Map<String, dynamic>;
+  }
+
+  Future<List<dynamic>> getChatHistory(String childId) async {
+    final res = await _dio.get('/api/ai/chat', queryParameters: {'childId': childId});
+    final data = res.data as Map<String, dynamic>;
+    return data['messages'] as List<dynamic>;
+  }
+
+  // ── AI Quiz ────────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> generateQuiz(
+      String childId, String subject, String difficulty) async {
+    final res = await _dio.post('/api/ai/quiz',
+        data: {'childId': childId, 'subject': subject, 'difficulty': difficulty});
+    return res.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> submitQuizAttempt(Map<String, dynamic> data) async {
+    final res = await _dio.post('/api/quiz/attempt', data: data);
+    return res.data as Map<String, dynamic>;
+  }
+
+  Future<List<dynamic>> getQuizzes({String? subject, String? difficulty}) async {
     final params = <String, dynamic>{};
-    if (category != null) params['category'] = category;
-    if (type != null) params['content_type'] = type;
-    final response = await _dio.get('/content/', queryParameters: params);
-    return response.data as List<dynamic>;
+    if (subject != null) params['subject'] = subject;
+    if (difficulty != null) params['difficulty'] = difficulty;
+    final res = await _dio.get('/api/quiz', queryParameters: params);
+    return res.data as List<dynamic>;
   }
 
-  Future<List<dynamic>> getRecommendations(int childId) async {
-    final response = await _dio.get('/content/recommend/$childId');
-    return response.data as List<dynamic>;
+  // ── AI Game ────────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> generateGame(String childId, String gameType) async {
+    final res = await _dio.post('/api/ai/game', data: {'childId': childId, 'gameType': gameType});
+    return res.data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> logWatch(Map<String, dynamic> data) async {
-    final response = await _dio.post('/content/watch-log', data: data);
-    return response.data as Map<String, dynamic>;
+  // ── AI Report ─────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> generateReport(String childId) async {
+    final res = await _dio.post('/api/ai/report', data: {'childId': childId});
+    return res.data as Map<String, dynamic>;
   }
 
-  // ── Games ─────────────────────────────────────────────────────────────────
-  Future<Map<String, dynamic>> startQuiz({String? category}) async {
-    final response = await _dio.post('/games/quiz/start', data: {
-      'game_type': 'quiz',
-      if (category != null) 'category': category,
-    });
-    return response.data as Map<String, dynamic>;
+  Future<List<dynamic>> getReports(String childId) async {
+    final res = await _dio.get('/api/ai/report', queryParameters: {'childId': childId});
+    final data = res.data as Map<String, dynamic>;
+    return data['reports'] as List<dynamic>;
   }
 
-  Future<List<dynamic>> getGameHistory() async {
-    final response = await _dio.get('/games/history');
-    return response.data as List<dynamic>;
+  // ── Agents ─────────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> runAgentPipeline(Map<String, dynamic> context) async {
+    final res = await _dio.post('/api/agents/trace', data: context);
+    return res.data as Map<String, dynamic>;
   }
 
-  // ── Social ────────────────────────────────────────────────────────────────
-  Future<List<dynamic>> getFriends() async {
-    final response = await _dio.get('/social/friends');
-    return response.data as List<dynamic>;
+  Future<List<dynamic>> getAgentTraces(String childId) async {
+    final res = await _dio.get('/api/agents/trace', queryParameters: {'childId': childId});
+    final data = res.data as Map<String, dynamic>;
+    return data['traces'] as List<dynamic>;
   }
 
-  Future<List<dynamic>> getFriendLeaderboard() async {
-    final response = await _dio.get('/social/leaderboard/friends');
-    return response.data as List<dynamic>;
+  // ── Friends ────────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> getFriends(String childId) async {
+    final res = await _dio.get('/api/friends', queryParameters: {'childId': childId});
+    return res.data as Map<String, dynamic>;
   }
 
-  Future<List<dynamic>> getActivityFeed() async {
-    final response = await _dio.get('/social/feed');
-    return response.data as List<dynamic>;
+  Future<void> sendFriendRequest(String fromChildId, String toChildId) async {
+    await _dio.post('/api/friends', data: {'fromChildId': fromChildId, 'toChildId': toChildId});
   }
 
-  Future<Map<String, dynamic>> sendFriendRequest(String username, String category) async {
-    final response = await _dio.post('/social/friends/request', data: {
-      'receiver_username': username,
-      'category': category,
-    });
-    return response.data as Map<String, dynamic>;
+  Future<void> approveFriendRequest(String requestId, bool approved) async {
+    await _dio.post('/api/friends/approve', data: {'requestId': requestId, 'approved': approved});
   }
 
-  // ── Parent ────────────────────────────────────────────────────────────────
-  Future<Map<String, dynamic>> getParentDashboard() async {
-    final response = await _dio.get('/parents/dashboard');
-    return response.data as Map<String, dynamic>;
+  // ── Screen Time ────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> getScreenTime(String childId) async {
+    final res = await _dio.get('/api/screen-time', queryParameters: {'childId': childId});
+    return res.data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> getChildReport(int childId, {int days = 7}) async {
-    final response = await _dio.get('/parents/children/$childId/report', queryParameters: {'days': days});
-    return response.data as Map<String, dynamic>;
+  Future<Map<String, dynamic>> logScreenTime(String childId, int minutes) async {
+    final res = await _dio.post('/api/screen-time', data: {'childId': childId, 'minutes': minutes});
+    return res.data as Map<String, dynamic>;
   }
 
-  Future<List<dynamic>> getSafetyAlerts() async {
-    final response = await _dio.get('/parents/alerts');
-    return response.data as List<dynamic>;
+  // ── Classrooms ─────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> createClassroom(String name, String subject) async {
+    final res = await _dio.post('/api/classrooms', data: {'name': name, 'subject': subject});
+    return res.data as Map<String, dynamic>;
   }
 
-  // ── AI ────────────────────────────────────────────────────────────────────
-  Future<Map<String, dynamic>> getLearningPath(int childId) async {
-    final response = await _dio.get('/ai/learning-path/$childId');
-    return response.data as Map<String, dynamic>;
+  Future<Map<String, dynamic>> joinClassroom(String childId, String joinCode) async {
+    final res = await _dio.post('/api/classrooms/join', data: {'childId': childId, 'joinCode': joinCode});
+    return res.data as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> getBehaviorAnalysis(int childId) async {
-    final response = await _dio.get('/ai/behavior/$childId');
-    return response.data as Map<String, dynamic>;
+  // ── Leaderboard ────────────────────────────────────────────────────────────
+  Future<List<dynamic>> getLeaderboard() async {
+    final res = await _dio.get('/api/leaderboard');
+    final data = res.data as Map<String, dynamic>;
+    return data['leaderboard'] as List<dynamic>;
   }
 }

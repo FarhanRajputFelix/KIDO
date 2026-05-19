@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getMobileSession } from "@/lib/mobile-auth";
 
 // GET /api/children - list children for current parent
 export async function GET() {
   try {
-    const session = await auth();
+    const session = await getMobileSession(req);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -26,7 +26,7 @@ export async function GET() {
 // POST /api/children - create a new child profile
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getMobileSession(req);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

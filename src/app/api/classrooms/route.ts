@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getMobileSession } from "@/lib/mobile-auth";
 
 // POST /api/classrooms — Create a classroom (Teacher only)
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getMobileSession(req);
     if (!session?.user || (session.user as any).role !== "teacher") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
