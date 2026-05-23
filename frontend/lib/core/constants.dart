@@ -1,7 +1,7 @@
 class KidoConstants {
   // ── API ─────────────────────────────────────────────────────────────────────
   // Change to your Vercel deployment URL in production
-  static const String baseUrl = 'https://kido-seven.vercel.app';
+  static const String baseUrl = 'https://isp-exposed-belief-prominent.trycloudflare.com';
 
   // Mobile-specific endpoints
   static const String mobileLoginPath = '/api/mobile/auth/login';

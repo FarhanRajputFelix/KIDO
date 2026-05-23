@@ -13,7 +13,10 @@ class ApiClient {
       baseUrl: KidoConstants.baseUrl,
       connectTimeout: const Duration(seconds: 20),
       receiveTimeout: const Duration(seconds: 30),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Bypass-Tunnel-Reminder': 'kido',
+      },
     ));
 
     _dio.interceptors.add(InterceptorsWrapper(
