@@ -5,16 +5,29 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 // Try models in order — fall back when quota is exhausted
 const MODEL_ORDER = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash"];
 
+// Circuit breaker: once all models are quota-exhausted, skip API calls for 10 min
+const quotaExhausted = new Map<string, number>();
+const CIRCUIT_RESET_MS = 10 * 60 * 1000;
+
 async function generateWithFallback(prompt: string): Promise<string> {
+  const now = Date.now();
   let lastError: unknown;
   for (const modelName of MODEL_ORDER) {
+    // Skip model if circuit is open (quota exhausted recently)
+    const exhaustedAt = quotaExhausted.get(modelName) ?? 0;
+    if (now - exhaustedAt < CIRCUIT_RESET_MS) continue;
+
     try {
       const model = genAI.getGenerativeModel({ model: modelName });
       const result = await model.generateContent(prompt);
       return result.response.text().replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     } catch (err: any) {
       lastError = err;
-      if (err?.status !== 429 && err?.status !== 503) throw err; // non-quota error → rethrow
+      if (err?.status === 429 || err?.status === 503) {
+        quotaExhausted.set(modelName, now); // open circuit for this model
+        continue;
+      }
+      throw err; // non-quota error → rethrow
     }
   }
   throw lastError;
