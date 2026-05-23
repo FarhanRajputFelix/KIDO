@@ -88907,7 +88907,7 @@ $S:58}
 A.aaK.prototype={}
 A.aaJ.prototype={}
 A.a2q.prototype={
-a4s(){var s,r=A.aQC("https://isp-exposed-belief-prominent.trycloudflare.com",B.GW,A.aF(["Content-Type","application/json","Bypass-Tunnel-Reminder","kido"],t.N,t.z),B.H_),q=new A.N7(A.a([B.Dz],t.i6))
+a4s(){var s,r=A.aQC("https://estimates-exactly-stephanie-tribal.trycloudflare.com",B.GW,A.aF(["Content-Type","application/json","Bypass-Tunnel-Reminder","kido"],t.N,t.z),B.H_),q=new A.N7(A.a([B.Dz],t.i6))
 q.K(q,B.M3)
 s=new A.a5C($,q,$,new A.a9c(51200),!1)
 s.W1$=r
