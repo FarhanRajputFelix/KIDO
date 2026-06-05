@@ -50,11 +50,26 @@ export default function LeaderboardPage() {
         </div>
       </nav>
 
-      <main className="flex-1 p-6 md:p-8 max-w-4xl mx-auto w-full">
-        <div className="mb-8 animate-slide-up">
-          <h1 className="text-3xl font-bold mb-2">📊 Leaderboard</h1>
-          <p className="text-foreground/50">Top learners ranked by XP. Can you reach the top?</p>
-        </div>
+      <main className="flex-1 p-5 md:p-8 max-w-2xl mx-auto w-full">
+        {/* Stitch-style gold hero card */}
+        {!loading && players.length > 0 && (
+          <div className="leaderboard-hero mb-8 animate-slide-up">
+            <div className="chip chip-gold mb-3 mx-auto" style={{ width: "fit-content" }}>YOUR CURRENT RANK</div>
+            <div className="text-5xl font-black mb-2" style={{ color: "#1a1a2e" }}>
+              #3 <span className="text-3xl font-bold">Overall</span>
+            </div>
+            <p className="text-base font-bold mb-4" style={{ color: "#3F3D9E" }}>You&apos;re doing amazing! 🏅</p>
+            <div className="glass rounded-2xl px-5 py-3 inline-block">
+              <span className="font-extrabold text-base" style={{ color: "#1a1a2e" }}>🌟 {players[0]?.name || "Top Student"}</span>
+              <span className="text-sm ml-2" style={{ color: "#3F3D9E" }}>· {players[0]?.xp?.toLocaleString() ?? 0} XP</span>
+            </div>
+          </div>
+        )}
+
+        <h2 className="font-extrabold text-xl mb-4 flex items-center gap-2" style={{ color: "#1a1a2e" }}>
+          <span>👥</span> Top Stars
+        </h2>
+
 
         {loading ? (
           <div className="text-center py-16">

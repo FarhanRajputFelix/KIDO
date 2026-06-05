@@ -2,36 +2,61 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-// Try models in order — fall back when quota is exhausted
-const MODEL_ORDER = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash"];
+// Current valid Gemini models (as of June 2026)
+const MODEL_ORDER = [
+  "gemini-2.0-flash",        // Primary — fastest, most capable
+  "gemini-2.0-flash-lite",   // Lighter quota limits
+  "gemini-1.5-flash-latest", // Stable fallback
+];
 
-// Circuit breaker: once all models are quota-exhausted, skip API calls for 10 min
+// Circuit breaker: mark a model as temporarily unavailable
 const quotaExhausted = new Map<string, number>();
-const CIRCUIT_RESET_MS = 10 * 60 * 1000;
+const CIRCUIT_RESET_MS = 60 * 1000; // 1 minute (quota resets per minute)
 
 async function generateWithFallback(prompt: string): Promise<string> {
   const now = Date.now();
   let lastError: unknown;
+
   for (const modelName of MODEL_ORDER) {
-    // Skip model if circuit is open (quota exhausted recently)
     const exhaustedAt = quotaExhausted.get(modelName) ?? 0;
     if (now - exhaustedAt < CIRCUIT_RESET_MS) continue;
 
     try {
       const model = genAI.getGenerativeModel({ model: modelName });
       const result = await model.generateContent(prompt);
-      return result.response.text().replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      const text = result.response.text();
+      quotaExhausted.delete(modelName); // Reset on success
+      return text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     } catch (err: any) {
       lastError = err;
-      if (err?.status === 429 || err?.status === 503) {
-        quotaExhausted.set(modelName, now); // open circuit for this model
-        continue;
+      const errMsg = err?.message || String(err);
+      // Detect quota/rate-limit errors (try next model)
+      const isQuota = errMsg.includes("429") || errMsg.includes("quota") ||
+                      errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("rate limit") ||
+                      err?.status === 429 || err?.httpStatus === 429;
+      // Detect deprecated/not found models (permanently skip, do NOT circuit break)
+      const isNotFound = errMsg.includes("404") || errMsg.includes("not found") ||
+                         errMsg.includes("not supported");
+
+      if (isQuota) {
+        console.warn(`[Gemini] ${modelName} quota hit — trying next model`);
+        quotaExhausted.set(modelName, now);
+      } else if (isNotFound) {
+        console.warn(`[Gemini] ${modelName} not found — permanently skipping`);
+        quotaExhausted.set(modelName, now + 24 * 60 * 60 * 1000); // Skip for 24h
+      } else {
+        console.warn(`[Gemini] ${modelName} error:`, errMsg.slice(0, 200));
+        quotaExhausted.set(modelName, now);
       }
-      throw err; // non-quota error → rethrow
+      continue;
     }
   }
+
+  // All models exhausted — reset circuits for next request
+  quotaExhausted.clear();
   throw lastError;
 }
+
 
 // ─── Child Profile for personalization ────────────────
 export interface ChildProfile {
@@ -403,5 +428,39 @@ Return ONLY valid JSON (no markdown):
     return JSON.parse(text);
   } catch {
     return fallbacks[gameType];
+  }
+}
+
+// ─── Floating KidoBot Tutor (stateless, no child profile required) ─────────
+export async function chatTutor(
+  message: string,
+  history: Array<{ role: string; content: string }>
+): Promise<string> {
+  const historyText = history.slice(-8).map(m =>
+    `${m.role === "user" ? "Student" : "Kido Bot"}: ${m.content}`
+  ).join("\n\n");
+
+  const prompt = `You are Kido Bot, a fun and friendly AI teaching assistant for children aged 6-14.
+Your job is to help students understand topics they are curious about or stuck on.
+
+RULES:
+- Use simple, age-appropriate language
+- Use emojis to make responses engaging 🎉
+- Give clear step-by-step explanations when teaching a concept
+- For math: show step-by-step working with examples
+- For science: include a fun real-world example or fact
+- Keep answers concise (max 3-4 short paragraphs)
+- If asked about unsafe topics, gently redirect to learning
+- Be encouraging — always praise curiosity!
+- Use everyday examples kids can relate to
+${historyText ? `\nConversation so far:\n${historyText}\n` : ""}
+Student asks: ${message}
+
+Kido Bot (respond helpfully and encouragingly):`;
+
+  try {
+    return await generateWithFallback(prompt);
+  } catch {
+    return `Oops! My AI brain is taking a short break 🤖💤\n\nTry asking me again in a moment!\n\n**Fun fact while you wait:** 🌟 Did you know the human brain can store about 2.5 million gigabytes of information? That's more than any computer ever built! 🧠`;
   }
 }

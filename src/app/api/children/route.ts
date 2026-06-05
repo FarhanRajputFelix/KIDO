@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getMobileSession } from "@/lib/mobile-auth";
 
 // GET /api/children - list children for current parent
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const session = await getMobileSession(req);
     if (!session?.user) {

@@ -261,71 +261,90 @@ export default function QuizPlayPage() {
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const progressPct = ((currentQ + 1) / quiz.questions.length) * 100;
+  const letters = ["A", "B", "C", "D"];
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Progress Header */}
-      <div className="px-6 py-4 border-b border-[var(--card-border)] bg-[var(--card)]">
-        <div className="max-w-2xl mx-auto flex items-center justify-between mb-2">
-          <span className="text-sm font-medium">
-            Question {currentQ + 1} of {quiz.questions.length}
-          </span>
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={handleSubmit} 
-              disabled={submitting}
-              className="px-3 py-1 rounded-lg bg-warning-500/10 text-warning-500 text-xs font-bold hover:bg-warning-500/20 transition-colors"
-            >
-              End Early ⏹️
-            </button>
-            <span className={`text-sm font-bold ${timeLeft <= 30 ? "text-accent-500 animate-streak" : ""}`}>
+    <div className="min-h-screen flex flex-col" style={{ background: "#F8F7FF" }}>
+      {/* Stitch-style header: avatar left, question count, timer right */}
+      <div className="px-5 py-4 bg-white border-b border-[var(--card-border)]">
+        <div className="max-w-xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🙂</span>
+            <div>
+              <div className="font-extrabold text-base" style={{ color: "#1a1a2e" }}>
+                Hi, {session?.user?.name?.split(" ")[0] || "Learner"}!
+              </div>
+              <div className="text-xs font-semibold" style={{ color: "#777587" }}>
+                QUESTION {currentQ + 1} OF {quiz.questions.length}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-sm"
+                 style={{ background: timeLeft <= 30 ? "#fff0f1" : "#fef9c3", color: timeLeft <= 30 ? "#f43f5e" : "#705d00", boxShadow: "0 2px 0 " + (timeLeft <= 30 ? "#fca5a5" : "#FFD700") }}>
               ⏱ {minutes}:{seconds.toString().padStart(2, "0")}
-            </span>
+            </div>
+            <div className="chip chip-purple">🔥 {quiz.xpReward} XP</div>
           </div>
         </div>
-        <div className="max-w-2xl mx-auto">
-          <div className="xp-bar-track h-2">
-            <div className="xp-bar-fill h-2" style={{ width: `${progressPct}%` }} />
+        {/* Progress bar */}
+        <div className="max-w-xl mx-auto mt-3">
+          <div className="w-full h-2.5 rounded-full" style={{ background: "#e8e5ff" }}>
+            <div className="h-full rounded-full transition-all duration-500"
+                 style={{ width: `${progressPct}%`, background: "linear-gradient(90deg,#6C63FF,#FFD700)" }} />
           </div>
         </div>
       </div>
 
-      {/* Question */}
-      <div className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="max-w-2xl w-full animate-slide-up" key={currentQ}>
-          <h2 className="text-xl md:text-2xl font-bold text-center mb-8">
-            {question.question}
-          </h2>
+      {/* Question card */}
+      <div className="flex-1 flex items-start justify-center px-4 pt-6 pb-24">
+        <div className="max-w-xl w-full animate-slide-up" key={currentQ}>
+          {/* Golden question number circle + card */}
+          <div className="relative mb-6">
+            <div className="w-11 h-11 rounded-full flex items-center justify-center font-black text-white text-lg absolute -top-5 -left-1 z-10"
+                 style={{ background: "#FFD700", color: "#1a1a2e", boxShadow: "0 3px 0 #b8970a" }}>
+              {currentQ + 1}
+            </div>
+            <div className="card pt-10 text-center" style={{ boxShadow: "0 4px 0 #e8e5ff" }}>
+              <h2 className="text-xl md:text-2xl font-extrabold" style={{ color: "#1a1a2e" }}>
+                {question.question}
+              </h2>
+            </div>
+          </div>
 
-          <div className="space-y-3">
+          {/* 2x2 Option Grid - Stitch style */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
             {question.options.map((option, idx) => (
               <button
                 key={idx}
                 onClick={() => setSelectedAnswer(idx)}
-                className={`quiz-option ${selectedAnswer === idx ? "selected" : ""}`}
+                className={`quiz-option flex-col gap-2 py-6 ${
+                  selectedAnswer === idx ? "selected-active" : ""
+                }`}
               >
-                <span
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-                  style={{
-                    background: selectedAnswer === idx ? "#8b5cf6" : "var(--background)",
-                    color: selectedAnswer === idx ? "white" : "inherit",
-                  }}
-                >
-                  {String.fromCharCode(65 + idx)}
-                </span>
-                <span>{option}</span>
+                <span className="text-2xl font-black">{option}</span>
+                <span className="text-xs font-semibold opacity-70">Choice {letters[idx]}</span>
               </button>
             ))}
           </div>
 
-          <div className="mt-8 flex justify-center">
+          {/* AI hint bubble */}
+          <div className="flex items-start gap-3 mb-6">
+            <span className="text-2xl">🤖</span>
+            <div className="chat-bubble-ai text-sm">
+              &ldquo;You&apos;re doing great! Take your time and think it through! 🚀&rdquo;
+            </div>
+          </div>
+
+          {/* Next button */}
+          <div className="flex justify-end">
             <button
               onClick={handleNext}
               disabled={selectedAnswer === null}
-              className="btn-primary py-3 px-10"
-              style={{ opacity: selectedAnswer === null ? 0.5 : 1 }}
+              className="btn-primary w-14 h-14 rounded-full p-0 text-xl"
+              style={{ opacity: selectedAnswer === null ? 0.45 : 1 }}
             >
-              {currentQ + 1 >= quiz.questions.length ? "Finish Quiz ✨" : "Next Question →"}
+              →
             </button>
           </div>
         </div>

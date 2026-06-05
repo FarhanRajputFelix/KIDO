@@ -20,7 +20,6 @@ export default function ChatPage() {
   const [childName, setChildName] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch child info and chat history
   useEffect(() => {
     if (status === "authenticated") {
       fetch("/api/dashboard")
@@ -30,12 +29,9 @@ export default function ChatPage() {
           if (child) {
             setChildId(child.id);
             setChildName(child.name);
-            // Load chat history
             fetch(`/api/ai/chat?childId=${child.id}`)
               .then(r => r.json())
-              .then(h => {
-                if (h.messages) setMessages(h.messages);
-              });
+              .then(h => { if (h.messages) setMessages(h.messages); });
           }
         });
     }
@@ -51,7 +47,6 @@ export default function ChatPage() {
     setInput("");
     setMessages(prev => [...prev, { role: "user", content: userMsg }]);
     setIsTyping(true);
-
     try {
       const res = await fetch("/api/ai/chat", {
         method: "POST",
@@ -59,90 +54,92 @@ export default function ChatPage() {
         body: JSON.stringify({ childId, message: userMsg }),
       });
       const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || "Failed to chat context");
-      }
-      if (data.message) {
-        setMessages(prev => [...prev, { role: "assistant", content: data.message.content }]);
-      }
+      if (!res.ok || data.error) throw new Error(data.error || "Failed");
+      if (data.message) setMessages(prev => [...prev, { role: "assistant", content: data.message.content }]);
     } catch {
-      setMessages(prev => [...prev, { role: "assistant", content: "Oops! My AI brain is currently thinking about something else. Please try again! 😊" }]);
+      setMessages(prev => [...prev, { role: "assistant", content: "Oops! Let me think again. Try asking me something! 😊" }]);
     }
     setIsTyping(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
-  // Format markdown-like content
-  const formatContent = (text: string) => {
-    return text
+  const formatContent = (text: string) =>
+    text
       .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre class="chat-code-block"><code>$2</code></pre>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/`(.*?)`/g, '<code class="chat-inline-code">$1</code>')
-      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-primary-500 hover:underline font-bold" style="text-decoration: underline;">$1</a>')
       .replace(/\n/g, '<br/>');
-  };
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#F8F7FF" }}>
         <div className="text-center">
-          <div className="text-4xl mb-4 animate-float">🤖</div>
-          <p className="text-foreground/50">Loading KIDO AI...</p>
+          <div className="text-6xl mb-4 animate-float">🤖</div>
+          <p className="font-bold" style={{ color: "#6C63FF" }}>Loading Kido AI...</p>
         </div>
       </div>
     );
   }
 
+  const quickPrompts = [
+    "🧮 Help me with fractions",
+    "🔬 How do volcanoes work?",
+    "💻 What is a variable?",
+    "📚 Explain photosynthesis",
+    "🌍 Ancient Egypt facts",
+    "🎨 How do colors mix?",
+  ];
+
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Chat Header */}
-      <nav className="flex items-center justify-between px-6 py-3 border-b border-[var(--card-border)] bg-[var(--card)]" style={{ height: "var(--nav-height)" }}>
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-foreground/50 hover:text-foreground no-underline">←</Link>
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-lg">🤖</div>
+    <div className="min-h-screen flex flex-col" style={{ background: "#F8F7FF" }}>
+      {/* Stitch-style chat header */}
+      <div className="bg-white border-b border-[var(--card-border)] px-5 py-4">
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Robot avatar */}
+            <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl"
+                 style={{ background: "linear-gradient(135deg,#6C63FF,#3F3D9E)", boxShadow: "0 3px 0 #2d2b70" }}>
+              🤖
+            </div>
             <div>
-              <h1 className="font-bold text-sm">KIDO AI</h1>
-              <p className="text-xs text-foreground/50">{isTyping ? "Thinking..." : "Your learning buddy"}</p>
+              <div className="font-extrabold text-base" style={{ color: "#1a1a2e" }}>Kido AI</div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full" style={{ background: isTyping ? "#f59e0b" : "#10b981" }} />
+                <span className="text-xs font-semibold" style={{ color: "#777587" }}>
+                  {isTyping ? "Thinking..." : "Your learning buddy"}
+                </span>
+              </div>
             </div>
           </div>
+          <div className="flex items-center gap-2">
+            <div className="chip chip-gold">⚡ 5 XP / chat</div>
+            <Link href="/dashboard" className="btn-secondary py-2 px-4 text-sm no-underline">← Back</Link>
+          </div>
         </div>
-        <Link href="/dashboard" className="btn-secondary py-2 px-4 text-sm no-underline">Back to Dashboard</Link>
-      </nav>
+      </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6" style={{ maxHeight: "calc(100vh - var(--nav-height) - 80px)" }}>
-        <div className="max-w-3xl mx-auto space-y-4">
-          {/* Welcome message if no history */}
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-5" style={{ maxHeight: "calc(100vh - 140px)" }}>
+        <div className="max-w-2xl mx-auto space-y-4">
+
+          {/* Welcome state */}
           {messages.length === 0 && (
-            <div className="text-center py-12 animate-slide-up">
+            <div className="text-center py-8 animate-slide-up">
               <div className="text-6xl mb-4 animate-float">🤖</div>
-              <h2 className="text-2xl font-bold mb-2">Hi {childName || "there"}! 👋</h2>
-              <p className="text-foreground/50 mb-6 max-w-md mx-auto">
-                I&apos;m KIDO AI, your personal learning buddy! Ask me anything about your subjects and I&apos;ll help you learn.
+              <h2 className="text-2xl font-extrabold mb-2" style={{ color: "#1a1a2e" }}>
+                Hi {childName || "there"}! 👋
+              </h2>
+              <p className="text-sm font-semibold mb-6 max-w-xs mx-auto" style={{ color: "#777587" }}>
+                I&apos;m Kido AI — your personal learning buddy! Ask me anything and I&apos;ll help you learn.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
-                {[
-                  "🧮 Help me with fractions",
-                  "🔬 How do volcanoes work?",
-                  "💻 What is a variable in coding?",
-                  "📚 Explain photosynthesis",
-                  "🌍 Tell me about ancient Egypt",
-                  "🎨 What makes colors mix?",
-                ].map(q => (
-                  <button
-                    key={q}
-                    onClick={() => { setInput(q); }}
-                    className="px-4 py-2 rounded-xl bg-[var(--card)] border border-[var(--card-border)] text-sm hover:border-primary-500 transition-all cursor-pointer"
-                    style={{ border: "1px solid var(--card-border)" }}
-                  >
+                {quickPrompts.map(q => (
+                  <button key={q} onClick={() => setInput(q)}
+                    className="chip chip-purple hover:bg-[#6C63FF] hover:text-white transition-all cursor-pointer text-xs py-2 px-3">
                     {q}
                   </button>
                 ))}
@@ -150,62 +147,69 @@ export default function ChatPage() {
             </div>
           )}
 
-          {/* Message Bubbles */}
+          {/* Message bubbles */}
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-slide-up`}>
-              <div className={`max-w-[80%] ${msg.role === "user" ? "chat-bubble-user" : "chat-bubble-ai"}`}>
+              {msg.role === "assistant" && (
+                <div className="w-9 h-9 rounded-2xl flex items-center justify-center text-base mr-2 shrink-0"
+                     style={{ background: "linear-gradient(135deg,#6C63FF,#3F3D9E)" }}>
+                  🤖
+                </div>
+              )}
+              <div>
                 {msg.role === "assistant" && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-xs">🤖</div>
-                    <span className="text-xs font-bold text-primary-500">KIDO AI</span>
-                  </div>
+                  <div className="text-xs font-bold mb-1 ml-1" style={{ color: "#6C63FF" }}>Kido AI</div>
                 )}
-                <div className="chat-content" dangerouslySetInnerHTML={{ __html: formatContent(msg.content) }} />
+                <div className={msg.role === "user" ? "chat-bubble-user" : "chat-bubble-ai"}>
+                  <div className="chat-content" dangerouslySetInnerHTML={{ __html: formatContent(msg.content) }} />
+                </div>
               </div>
             </div>
           ))}
 
-          {/* Typing Indicator */}
+          {/* Typing indicator */}
           {isTyping && (
             <div className="flex justify-start animate-slide-up">
+              <div className="w-9 h-9 rounded-2xl flex items-center justify-center text-base mr-2 shrink-0"
+                   style={{ background: "linear-gradient(135deg,#6C63FF,#3F3D9E)" }}>🤖</div>
               <div className="chat-bubble-ai">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-xs">🤖</div>
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                    <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
-                    <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
-                  </div>
+                <div className="flex gap-1.5 items-center">
+                  {[0, 150, 300].map(delay => (
+                    <div key={delay} className="w-2.5 h-2.5 rounded-full animate-bounce"
+                         style={{ background: "#6C63FF", animationDelay: `${delay}ms` }} />
+                  ))}
                 </div>
               </div>
             </div>
           )}
-
           <div ref={messagesEndRef} />
         </div>
       </div>
 
-      {/* Input Area */}
-      <div className="border-t border-[var(--card-border)] bg-[var(--card)] p-4">
-        <div className="max-w-3xl mx-auto flex gap-3">
+      {/* Input bar - Stitch style */}
+      <div className="bg-white border-t border-[var(--card-border)] px-5 py-4">
+        <div className="max-w-2xl mx-auto flex gap-3">
           <textarea
             className="input flex-1 resize-none"
             rows={1}
-            placeholder="Ask me anything! 🚀"
+            placeholder="Ask Kido AI anything! 🚀"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isTyping || !childId}
+            style={{ minHeight: "48px", maxHeight: "120px" }}
           />
           <button
             onClick={handleSend}
             disabled={isTyping || !input.trim() || !childId}
-            className="btn-primary px-6"
-          >
-            {isTyping ? "..." : "Send ✨"}
+            className="btn-primary w-14 h-12 rounded-2xl p-0 text-xl shrink-0"
+            style={{ opacity: isTyping || !input.trim() || !childId ? 0.5 : 1 }}>
+            ✨
           </button>
         </div>
-        <p className="text-center text-xs text-foreground/30 mt-2">KIDO AI learns with you — powered by Google Gemini</p>
+        <p className="text-center text-xs mt-2 font-semibold" style={{ color: "#c5c0ff" }}>
+          Powered by Google Gemini AI · Safe for Kids 🛡️
+        </p>
       </div>
     </div>
   );

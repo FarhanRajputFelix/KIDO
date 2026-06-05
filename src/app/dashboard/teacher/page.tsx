@@ -114,18 +114,17 @@ export default function TeacherDashboard() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Top Navbar */}
-      <nav className="flex items-center justify-between px-6 py-3 border-b border-[var(--card-border)] bg-[var(--card)]" style={{ height: "var(--nav-height)" }}>
-        <div className="flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-2 text-lg font-bold no-underline">
-            <span className="text-xl">🧒</span>
-            <span className="gradient-text">KIDO</span>
-          </Link>
-          <span className="px-2 py-1 rounded-lg bg-warning-500/10 text-warning-500 text-xs font-bold uppercase">Teacher</span>
+    <div className="min-h-screen flex flex-col" style={{ background: "#F8F7FF" }}>
+      {/* Stitch Top Navbar */}
+      <nav className="flex items-center justify-between px-5 py-4 bg-white border-b border-[var(--card-border)]">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-white"
+               style={{ background: "linear-gradient(135deg,#6C63FF,#3F3D9E)", boxShadow: "0 2px 0 #2d2b70" }}>K</div>
+          <span className="text-xl font-black gradient-text">KIDO</span>
+          <span className="chip chip-gold">Teacher</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-foreground/50 hidden md:inline">{session?.user?.name}</span>
+          <span className="text-sm font-semibold hidden md:inline" style={{ color: "#777587" }}>{session?.user?.name}</span>
           <button onClick={() => signOut({ callbackUrl: "/" })} className="btn-secondary py-2 px-4 text-sm">Logout</button>
         </div>
       </nav>

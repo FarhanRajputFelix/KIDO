@@ -6,13 +6,7 @@ import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    role: "parent",
-  });
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", confirmPassword: "", role: "parent" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -23,38 +17,18 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords don't match");
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
-
+    if (formData.password !== formData.confirmPassword) { setError("Passwords don't match"); return; }
+    if (formData.password.length < 6) { setError("Password must be at least 6 characters"); return; }
     setLoading(true);
-
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          role: formData.role,
-        }),
+        body: JSON.stringify({ name: formData.name, email: formData.email, password: formData.password, role: formData.role }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Registration failed");
-      } else {
-        router.push("/login?registered=true");
-      }
+      if (!res.ok) setError(data.error || "Registration failed");
+      else router.push("/login?registered=true");
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -62,114 +36,108 @@ export default function RegisterPage() {
     }
   };
 
+  const roles = [
+    { value: "parent", icon: "👨‍👩‍👧", label: "Parent", desc: "Monitor & manage your child" },
+    { value: "teacher", icon: "👨‍🏫", label: "Teacher", desc: "Manage classrooms & quizzes" },
+    { value: "child", icon: "🧒", label: "Student", desc: "Learn, play & earn XP" },
+  ];
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8 animate-slide-up">
-          <Link href="/" className="inline-flex items-center gap-2 text-2xl font-bold no-underline mb-4">
-            <span className="text-3xl">🧒</span>
-            <span className="gradient-text">KIDO</span>
-          </Link>
-          <h1 className="text-2xl font-bold mt-4">Create your account</h1>
-          <p className="text-foreground/50 mt-1">Start your learning journey today</p>
+    <div className="min-h-screen flex" style={{ background: "#F8F7FF" }}>
+      {/* Left panel */}
+      <div className="hidden md:flex flex-col justify-center px-12 w-[420px] shrink-0 hero-banner" style={{ borderRadius: 0 }}>
+        <Link href="/" className="flex items-center gap-3 no-underline mb-10">
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center font-black text-xl"
+               style={{ background: "#FFD700", color: "#1a1a2e", boxShadow: "0 3px 0 #b8970a" }}>K</div>
+          <span className="text-2xl font-black text-white">KIDO</span>
+        </Link>
+        <div className="text-7xl mb-6 animate-bounce-in">🌟</div>
+        <h2 className="text-3xl font-black text-white leading-tight mb-3">
+          Join KIDO<br />Learning!
+        </h2>
+        <p className="text-white/70 text-base mb-8">
+          Start your AI-powered learning journey. Unlock knowledge, earn badges, and grow every day.
+        </p>
+        <div className="alert-gold rounded-2xl p-4">
+          <p className="font-bold text-sm" style={{ color: "#705d00" }}>🏆 New members unlock 3 starter badges on first login!</p>
         </div>
+      </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="card animate-scale-in space-y-5">
-          {error && (
-            <div className="p-3 rounded-xl bg-accent-500/10 border border-accent-500/20 text-accent-500 text-sm text-center">
-              {error}
+      {/* Right form panel */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
+        <Link href="/" className="flex items-center gap-2 no-underline mb-6 md:hidden">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-white"
+               style={{ background: "linear-gradient(135deg,#6C63FF,#3F3D9E)" }}>K</div>
+          <span className="text-xl font-black gradient-text">KIDO</span>
+        </Link>
+
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-7">
+            <h1 className="text-2xl font-extrabold mb-1" style={{ color: "#1a1a2e" }}>Create your account</h1>
+            <p className="text-sm font-semibold" style={{ color: "#777587" }}>Start your learning journey today!</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && <div className="alert-urgent text-sm text-center font-semibold">{error}</div>}
+
+            <div>
+              <label className="label" htmlFor="name">FULL NAME</label>
+              <input id="name" name="name" type="text" className="input" placeholder="Sara Ahmed"
+                value={formData.name} onChange={handleChange} required />
             </div>
-          )}
 
-          <div>
-            <label className="label" htmlFor="name">Full Name</label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              className="input"
-              placeholder="Sara Ahmed"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
+            <div>
+              <label className="label" htmlFor="reg-email">EMAIL</label>
+              <input id="reg-email" name="email" type="email" className="input" placeholder="you@example.com"
+                value={formData.email} onChange={handleChange} required />
+            </div>
 
-          <div>
-            <label className="label" htmlFor="reg-email">Email</label>
-            <input
-              id="reg-email"
-              name="email"
-              type="email"
-              className="input"
-              placeholder="you@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
+            {/* Role selector - Stitch card style */}
+            <div>
+              <label className="label">I AM A</label>
+              <div className="grid grid-cols-3 gap-2">
+                {roles.map(r => (
+                  <button key={r.value} type="button"
+                    onClick={() => setFormData({ ...formData, role: r.value })}
+                    className="flex flex-col items-center gap-1 p-3 rounded-2xl border-2 transition-all text-center"
+                    style={{
+                      borderColor: formData.role === r.value ? "#6C63FF" : "#e8e5ff",
+                      background: formData.role === r.value ? "#f0efff" : "white",
+                      boxShadow: formData.role === r.value ? "0 3px 0 #6C63FF44" : "0 2px 0 #e8e5ff",
+                    }}>
+                    <span className="text-2xl">{r.icon}</span>
+                    <span className="text-xs font-bold" style={{ color: formData.role === r.value ? "#6C63FF" : "#1a1a2e" }}>{r.label}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs mt-1 text-center font-semibold" style={{ color: "#777587" }}>
+                {roles.find(r => r.value === formData.role)?.desc}
+              </p>
+            </div>
 
-          <div>
-            <label className="label" htmlFor="role">I am a</label>
-            <select
-              id="role"
-              name="role"
-              className="input"
-              value={formData.role}
-              onChange={handleChange}
-            >
-              <option value="parent">👨‍👩‍👧 Parent</option>
-              <option value="teacher">👨‍🏫 Teacher</option>
-              <option value="child">🧒 Student / Kid</option>
-            </select>
-          </div>
+            <div>
+              <label className="label" htmlFor="reg-password">PASSWORD</label>
+              <input id="reg-password" name="password" type="password" className="input" placeholder="At least 6 characters"
+                value={formData.password} onChange={handleChange} required />
+            </div>
 
-          <div>
-            <label className="label" htmlFor="reg-password">Password</label>
-            <input
-              id="reg-password"
-              name="password"
-              type="password"
-              className="input"
-              placeholder="At least 6 characters"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
+            <div>
+              <label className="label" htmlFor="reg-confirm">CONFIRM PASSWORD</label>
+              <input id="reg-confirm" name="confirmPassword" type="password" className="input" placeholder="••••••••"
+                value={formData.confirmPassword} onChange={handleChange} required />
+            </div>
 
-          <div>
-            <label className="label" htmlFor="reg-confirm">Confirm Password</label>
-            <input
-              id="reg-confirm"
-              name="confirmPassword"
-              type="password"
-              className="input"
-              placeholder="••••••••"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-          </div>
+            <button type="submit" disabled={loading} className="btn-primary w-full py-4 text-base"
+                    style={{ opacity: loading ? 0.7 : 1 }}>
+              {loading ? "⏳ Creating account..." : "Create Account 🚀"}
+            </button>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full py-3.5"
-            style={{ opacity: loading ? 0.7 : 1 }}
-          >
-            {loading ? "Creating account..." : "Create Account"}
-          </button>
-
-          <div className="text-center text-sm text-foreground/50">
-            Already have an account?{" "}
-            <Link href="/login" className="text-primary-500 font-medium no-underline hover:underline">
-              Sign In
-            </Link>
-          </div>
-        </form>
+            <p className="text-center text-sm" style={{ color: "#777587" }}>
+              Already have an account?{" "}
+              <Link href="/login" className="font-bold no-underline" style={{ color: "#6C63FF" }}>Sign In</Link>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   );
