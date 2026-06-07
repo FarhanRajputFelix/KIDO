@@ -17,7 +17,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Classroom name is required" }, { status: 400 });
     }
 
-    const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    // Generate a unique join code (retry on the rare collision).
+    let joinCode = "";
+    for (let i = 0; i < 6; i++) {
+      joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const exists = await prisma.classroom.findUnique({ where: { joinCode } });
+      if (!exists) break;
+    }
 
     const classroom = await prisma.classroom.create({
       data: {

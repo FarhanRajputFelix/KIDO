@@ -77,8 +77,9 @@ export default function KidDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ childId: child.id, joinCode: joinCode.trim() })
       });
-      if (res.ok) { setJoinStatus("Successfully joined classroom! 🎉"); setJoinCode(""); setTimeout(() => setShowJoinClass(false), 3000); }
-      else { const d = await res.json(); setJoinStatus(d.error || "Failed to join classroom"); }
+      const d = await res.json();
+      if (res.ok) { setJoinStatus(d.message || "Request sent! A parent must approve before you join. 📚"); setJoinCode(""); setTimeout(() => setShowJoinClass(false), 4000); }
+      else { setJoinStatus(d.error || "Failed to join classroom"); }
     } catch { setJoinStatus("Error joining classroom."); }
   };
 
@@ -156,8 +157,8 @@ export default function KidDashboard() {
             {[
               { href: "/quiz", icon: "🧮", label: "Math", bg: "#fff0ef", iconBg: "#ffe4e1", pct: 40, color: "#6C63FF" },
               { href: "/chat", icon: "🤖", label: "Ask AI", bg: "#f0efff", iconBg: "#e8e5ff", pct: 0, color: "#6C63FF" },
+              { href: "/videos", icon: "📺", label: "Videos", bg: "#eef6ff", iconBg: "#dbeafe", pct: 0, color: "#3b82f6" },
               { href: "/games", icon: "🎮", label: "Games", bg: "#f0fff4", iconBg: "#d1fae5", pct: 0, color: "#10b981" },
-              { href: "/achievements", icon: "🏆", label: "Badges", bg: "#fffbeb", iconBg: "#fef3c7", pct: childBadges.length * 5, color: "#f59e0b" },
             ].map(s => (
               <Link key={s.label} href={s.href} className="subject-card no-underline" style={{ background: s.bg }}>
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-2" style={{ background: s.iconBg }}>{s.icon}</div>
@@ -236,10 +237,14 @@ export default function KidDashboard() {
               </div>
               {showAddFriend && (
                 <div className="mb-3 animate-slide-up">
-                  <p className="text-xs font-semibold mb-2" style={{ color: "#777587" }}>Your code: <strong style={{ color: "#6C63FF" }}>{child.id.slice(0, 8)}</strong></p>
-                  {friendStatus && <div className={`text-xs font-bold mb-2 ${friendStatus.includes("Error") ? "text-red-500" : "text-green-600"}`}>{friendStatus}</div>}
+                  <p className="text-xs font-semibold mb-1" style={{ color: "#777587" }}>Your friend code:</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <code className="flex-1 text-xs font-mono px-2 py-1.5 rounded-lg truncate" style={{ background: "#f0efff", color: "#6C63FF" }}>{child.id}</code>
+                    <button onClick={() => { navigator.clipboard?.writeText(child.id); setFriendStatus("Copied your code!"); }} className="btn-secondary py-1.5 px-2 text-xs">📋</button>
+                  </div>
+                  {friendStatus && <div className={`text-xs font-bold mb-2 ${friendStatus.includes("Error") || friendStatus.includes("Failed") ? "text-red-500" : "text-green-600"}`}>{friendStatus}</div>}
                   <div className="flex gap-2">
-                    <input className="input flex-1 py-2 text-sm" placeholder="Friend's ID"
+                    <input className="input flex-1 py-2 text-sm" placeholder="Paste friend's code"
                       value={friendCode} onChange={e => setFriendCode(e.target.value)} />
                     <button onClick={handleAddFriend} className="btn-primary py-2 px-3 text-xs">Send</button>
                   </div>
@@ -266,6 +271,37 @@ export default function KidDashboard() {
               )}
             </div>
           </div>
+
+          {/* Pending friend requests (Facebook-style, awaiting parent approval) */}
+          {((data?.incomingRequests?.length || 0) + (data?.outgoingRequests?.length || 0)) > 0 && (
+            <div className="card mb-5" style={{ boxShadow: "0 3px 0 #e8e5ff" }}>
+              <h3 className="font-extrabold text-base mb-3 flex items-center gap-2" style={{ color: "#1a1a2e" }}>
+                ⏳ Friend Requests
+              </h3>
+              <div className="space-y-2">
+                {data?.incomingRequests?.map((r: any) => (
+                  <div key={r.id} className="flex items-center gap-2 p-2 rounded-xl" style={{ background: "#fffbeb" }}>
+                    <span className="text-xl">{r.fromChild?.avatar || "🙂"}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-sm truncate" style={{ color: "#1a1a2e" }}>{r.fromChild?.name} wants to be your friend</div>
+                      <div className="text-xs font-semibold" style={{ color: "#f59e0b" }}>Waiting for a parent to approve</div>
+                    </div>
+                    <span className="chip chip-gold text-xs">Incoming</span>
+                  </div>
+                ))}
+                {data?.outgoingRequests?.map((r: any) => (
+                  <div key={r.id} className="flex items-center gap-2 p-2 rounded-xl" style={{ background: "#f0efff" }}>
+                    <span className="text-xl">{r.toChild?.avatar || "🙂"}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-sm truncate" style={{ color: "#1a1a2e" }}>Request sent to {r.toChild?.name}</div>
+                      <div className="text-xs font-semibold" style={{ color: "#777587" }}>Waiting for a parent to approve</div>
+                    </div>
+                    <span className="chip chip-purple text-xs">Sent</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Activity Feed */}
           <div className="card mb-5" style={{ boxShadow: "0 3px 0 #e8e5ff" }}>
@@ -296,6 +332,8 @@ export default function KidDashboard() {
           {/* Bottom links */}
           <div className="flex flex-wrap gap-3 mb-4">
             <Link href="/leaderboard" className="btn-primary no-underline text-sm">⭐ Leaderboard</Link>
+            <Link href="/videos" className="btn-secondary no-underline text-sm">📺 Videos</Link>
+            <Link href="/messages" className="btn-secondary no-underline text-sm">💬 Messages</Link>
             <Link href="/achievements" className="btn-secondary no-underline text-sm">🏆 Achievements</Link>
             <Link href="/agents" className="btn-secondary no-underline text-sm">🧠 AI Pipeline</Link>
           </div>

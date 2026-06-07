@@ -324,20 +324,35 @@ export default function TeacherDashboard() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {data.classrooms?.map((c: any) => (
+                  {data.classrooms?.map((c: any) => {
+                    const enrolled = (() => { try { return JSON.parse(c.studentIds).length; } catch { return 0; } })();
+                    const pending = (() => { try { return JSON.parse(c.pendingStudentIds || "[]").length; } catch { return 0; } })();
+                    return (
                     <div key={c.id} className="card">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="font-bold text-lg">{c.name}</h3>
-                        <span className="px-2 py-1 rounded-lg bg-primary-500/10 text-primary-500 text-xs font-mono">{c.joinCode}</span>
+                      </div>
+                      {/* Share code */}
+                      <div className="mb-3 p-3 rounded-xl" style={{ background: "rgba(139,92,246,0.08)" }}>
+                        <div className="text-xs text-foreground/50 mb-1">Share this join code with students:</div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-mono font-bold tracking-widest text-primary-500">{c.joinCode}</span>
+                          <button
+                            onClick={() => { navigator.clipboard?.writeText(c.joinCode); setClassroomFeedback(`Copied code ${c.joinCode}!`); }}
+                            className="btn-secondary py-1 px-2 text-xs ml-auto"
+                          >📋 Copy</button>
+                        </div>
                       </div>
                       <div className="text-sm text-foreground/50 space-y-1">
                         {c.subject && <p>📚 Subject: {c.subject}</p>}
                         {c.grade && <p>🎓 Grade: {c.grade}</p>}
-                        <p>👨‍🎓 Students: {JSON.parse(c.studentIds).length}</p>
+                        <p>👨‍🎓 Enrolled: {enrolled}</p>
+                        {pending > 0 && <p style={{ color: "#f59e0b" }}>⏳ Awaiting parent approval: {pending}</p>}
                         <p>📋 Lessons: {c.lessons?.length || 0}</p>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

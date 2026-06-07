@@ -103,6 +103,27 @@ export async function POST(req: NextRequest) {
       data: { fromChildId, toChildId, status: "pending" },
     });
 
+    // Notify BOTH parents so either can approve (Facebook-style, parent-gated).
+    const fromChild = await prisma.child.findUnique({ where: { id: fromChildId }, select: { name: true } });
+    await prisma.parentAlert.createMany({
+      data: [
+        {
+          childId: fromChildId,
+          type: "friend_request",
+          title: `👋 Friend request sent`,
+          message: `${fromChild?.name || "Your child"} wants to be friends with ${toChild.name}. Approve it in your Parent Panel → Friends.`,
+          severity: "info",
+        },
+        {
+          childId: toChildId,
+          type: "friend_request",
+          title: `👋 New friend request`,
+          message: `${fromChild?.name || "A child"} wants to be friends with ${toChild.name}. Approve it in your Parent Panel → Friends.`,
+          severity: "info",
+        },
+      ],
+    });
+
     return NextResponse.json({ request });
   } catch (error) {
     console.error("Friend request error:", error);

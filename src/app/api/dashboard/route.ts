@@ -209,10 +209,22 @@ export async function GET(req: NextRequest) {
         })
       : [];
 
+    // Pending friend activity (so the child sees requests like Facebook).
+    const incomingRequests = await prisma.friendRequest.findMany({
+      where: { toChildId: child.id, parentApproved: false, status: { not: "rejected" } },
+      include: { fromChild: { select: { id: true, name: true, avatar: true } } },
+    });
+    const outgoingRequests = await prisma.friendRequest.findMany({
+      where: { fromChildId: child.id, parentApproved: false, status: { not: "rejected" } },
+      include: { toChild: { select: { id: true, name: true, avatar: true } } },
+    });
+
     return NextResponse.json({
       role: "child",
       child,
       friendsProgress,
+      incomingRequests,
+      outgoingRequests,
       todayScreenTime: child.screenTimeLogs[0] || { minutes: 0 },
     });
   } catch (error) {

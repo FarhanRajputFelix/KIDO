@@ -228,6 +228,19 @@ model FriendRequest {
   toChild       Child    @relation("ReceivedFriendRequests", fields: [toChildId], references: [id])
 }
 
+// ─── Friend Messages (child-to-child, approved friends only) ──
+model FriendMessage {
+  id          String   @id @default(cuid())
+  fromChildId String
+  toChildId   String
+  content     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([fromChildId])
+  @@index([toChildId])
+}
+
 // ─── Parent Alert ────────────────────────────────────
 model ParentAlert {
   id            String   @id @default(cuid())
