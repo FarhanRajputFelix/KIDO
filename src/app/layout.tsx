@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 import KidoBot from "@/components/KidoBot";
+import ServiceWorker from "@/components/ServiceWorker";
 
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -20,6 +21,12 @@ export const metadata: Metadata = {
   description:
     "Gamified learning ecosystem where children explore, learn, and grow through adaptive quizzes, interactive content, and friendly challenges.",
   keywords: ["education", "kids", "learning", "gamification", "AI", "quiz"],
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "KIDO" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#6C63FF",
 };
 
 export default function RootLayout({
@@ -38,6 +45,7 @@ export default function RootLayout({
           {/* Floating AI Teaching Chatbot — available on every page */}
           <KidoBot />
         </Providers>
+        <ServiceWorker />
       </body>
     </html>
   );
