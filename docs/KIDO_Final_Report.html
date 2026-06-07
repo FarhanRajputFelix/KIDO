@@ -26,6 +26,9 @@
   .shot { border:1px dashed #c5c0ff; background:#faf9ff; border-radius:10px; padding:26px; text-align:center; color:#8a85b8; font-size:12px; margin:10px 0; }
   .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .section { page-break-inside: avoid; }
+  figure { margin: 0 0 8px; page-break-inside: avoid; }
+  figure img { width: 100%; border: 1px solid #d8d4ff; border-radius: 8px; display: block; }
+  figcaption { font-size: 10.5px; color: var(--mut); text-align: center; margin-top: 4px; }
   footer { text-align:center; color:#999; font-size:10px; margin-top:24px; }
   @media print { h2 { page-break-after: avoid; } table, .callout, .shot { page-break-inside: avoid; } }
 </style>
@@ -202,15 +205,16 @@
   <tr><td><b>Teacher</b></td><td>Create classrooms w/ shareable join codes, AI quiz generation per student, class performance analytics, enrolled/pending student tracking.</td></tr>
   <tr><td><b>Admin</b></td><td>Platform stats, user/teacher/classroom oversight, top students.</td></tr>
 </table>
-<h3>Screenshots</h3>
-<p class="muted">Insert your screenshots in the boxes below (drag images into this section before printing to PDF):</p>
+<h3>Screenshots (captured from the live app)</h3>
 <div class="grid2">
-  <div class="shot">[ Child Dashboard ]</div>
-  <div class="shot">[ AI Tutor — multi-session chat ]</div>
-  <div class="shot">[ Parent Panel — AI Insight Report ]</div>
-  <div class="shot">[ Video Library (age-filtered) ]</div>
-  <div class="shot">[ Quiz + Results (XP / level-up) ]</div>
-  <div class="shot">[ AI Agent Pipeline Trace ]</div>
+  <figure><img src="screenshots/kid-dashboard.png" alt="Child dashboard"><figcaption>Child dashboard — XP, streak, subjects, and a parent-pending friend request.</figcaption></figure>
+  <figure><img src="screenshots/tutor.png" alt="AI Tutor"><figcaption>AI Tutor — multi-session chat with "New Chat" history sidebar.</figcaption></figure>
+  <figure><img src="screenshots/parent-dashboard.png" alt="Parent panel"><figcaption>Parent Panel — multi-child management, alerts, approvals, AI reports.</figcaption></figure>
+  <figure><img src="screenshots/videos.png" alt="Video library"><figcaption>Video Library — age-filtered educational videos with search.</figcaption></figure>
+  <figure><img src="screenshots/quiz.png" alt="Quiz"><figcaption>Adaptive AI quiz flow (scoring → XP → level → streak).</figcaption></figure>
+  <figure><img src="screenshots/ai-pipeline.png" alt="AI agent pipeline"><figcaption>Agentic AI pipeline — per-agent reasoning traces.</figcaption></figure>
+  <figure><img src="screenshots/games.png" alt="Games"><figcaption>AI Games hub — word, story, and math challenges.</figcaption></figure>
+  <figure><img src="screenshots/leaderboard.png" alt="Leaderboard"><figcaption>Leaderboard — XP / streaks / quizzes rankings.</figcaption></figure>
 </div>
 </div>
 
@@ -234,14 +238,13 @@
 <!-- 10 -->
 <div class="section">
 <h2>10. Team &amp; Work Distribution</h2>
-<p class="muted">Replace with your team's actual names and roles.</p>
 <table>
-  <tr><th>Member</th><th>Primary Role</th><th>Key Contributions</th></tr>
-  <tr><td>[Member 1 — Lead]</td><td>Architecture &amp; AI</td><td>Agentic pipeline, AI integration, prompts.</td></tr>
-  <tr><td>[Member 2]</td><td>Backend</td><td>Prisma schema, API routes, authorization guard.</td></tr>
-  <tr><td>[Member 3]</td><td>Frontend</td><td>Dashboards, video library, chat UI.</td></tr>
-  <tr><td>[Member 4]</td><td>Safety &amp; QA</td><td>Parental consent, age gating, testing.</td></tr>
-  <tr><td>[Member 5]</td><td>DevOps &amp; Docs</td><td>Deployment, PWA/APK, report &amp; README.</td></tr>
+  <tr><th>Team Member</th><th>Phase(s)</th><th>Primary Tasks</th></tr>
+  <tr><td><b>Farhan (Lead)</b></td><td>1, 4</td><td>AI architecture, agentic system, ML models, system design</td></tr>
+  <tr><td><b>Zubair Khan</b></td><td>1, 2, 3</td><td>Flutter UI, design system, screens, animations</td></tr>
+  <tr><td><b>Fahad</b></td><td>2, 3, 4</td><td>FastAPI backend, PostgreSQL, REST APIs, Docker</td></tr>
+  <tr><td><b>Syed Muhammad Asghar</b></td><td>1, 6</td><td>Documentation, research papers, final report, presentation</td></tr>
+  <tr><td><b>Chaudhary Saboor Munir</b></td><td>5, 6</td><td>Unit testing, integration testing, QA, deployment support</td></tr>
 </table>
 </div>
 

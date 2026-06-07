@@ -129,13 +129,13 @@ npm run dev          # http://localhost:3000
 
 ## 👥 Team
 
-| Member | Role |
-|--------|------|
-| _[Member 1 — Lead]_ | Architecture & AI |
-| _[Member 2]_ | Backend |
-| _[Member 3]_ | Frontend |
-| _[Member 4]_ | Safety & QA |
-| _[Member 5]_ | DevOps & Docs |
+| Member | Phase(s) | Role |
+|--------|----------|------|
+| **Farhan (Lead)** | 1, 4 | AI architecture, agentic system, ML models, system design |
+| **Zubair Khan** | 1, 2, 3 | Flutter UI, design system, screens, animations |
+| **Fahad** | 2, 3, 4 | FastAPI backend, PostgreSQL, REST APIs, Docker |
+| **Syed Muhammad Asghar** | 1, 6 | Documentation, research papers, final report, presentation |
+| **Chaudhary Saboor Munir** | 5, 6 | Unit testing, integration testing, QA, deployment support |
 
 ---
 
