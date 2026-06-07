@@ -381,32 +381,37 @@ export default function ParentDashboard() {
                   </div>
                 )}
 
-                {/* Alerts Tab */}
-                {activeTab === "alerts" && (
-                  <div className="animate-slide-up">
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><span>🔔</span> Alerts</h2>
-                    <div className="space-y-3">
-                      {activeChild.alerts?.length > 0 ? activeChild.alerts.map((alert) => (
-                        <div key={alert.id} className="card flex items-start gap-3" style={{
-                          borderLeftWidth: 4,
-                          borderLeftColor: alert.severity === "critical" ? "#f43f5e" : alert.severity === "warning" ? "#f59e0b" : "#8b5cf6",
-                        }}>
-                          <span className="text-xl mt-0.5">{alert.severity === "critical" ? "🚨" : alert.severity === "warning" ? "⚠️" : "ℹ️"}</span>
-                          <div>
-                            <div className="font-medium text-sm">{alert.title}</div>
-                            <div className="text-xs text-foreground/50">{alert.message}</div>
-                            <div className="text-xs text-foreground/30 mt-1">{alert.type}</div>
+                {/* Alerts Tab — aggregated across ALL children */}
+                {activeTab === "alerts" && (() => {
+                  const allAlerts = (data?.children || []).flatMap((ch: any) =>
+                    (ch.alerts || []).map((a: any) => ({ ...a, childName: ch.name, childAvatar: ch.avatar }))
+                  );
+                  return (
+                    <div className="animate-slide-up">
+                      <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><span>🔔</span> Alerts</h2>
+                      <div className="space-y-3">
+                        {allAlerts.length > 0 ? allAlerts.map((alert: any) => (
+                          <div key={alert.id} className="card flex items-start gap-3" style={{
+                            borderLeftWidth: 4,
+                            borderLeftColor: alert.severity === "critical" ? "#f43f5e" : alert.severity === "warning" ? "#f59e0b" : "#8b5cf6",
+                          }}>
+                            <span className="text-xl mt-0.5">{alert.severity === "critical" ? "🚨" : alert.severity === "warning" ? "⚠️" : "ℹ️"}</span>
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">{alert.title}</div>
+                              <div className="text-xs text-foreground/50">{alert.message}</div>
+                              <div className="text-xs text-foreground/30 mt-1">{alert.childAvatar} {alert.childName} · {alert.type}</div>
+                            </div>
                           </div>
-                        </div>
-                      )) : (
-                        <div className="card text-center py-12">
-                          <div className="text-4xl mb-4">✅</div>
-                          <p className="text-foreground/50">No alerts! Everything looks good.</p>
-                        </div>
-                      )}
+                        )) : (
+                          <div className="card text-center py-12">
+                            <div className="text-4xl mb-4">✅</div>
+                            <p className="text-foreground/50">No alerts! Everything looks good.</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Friends Tab */}
                 {activeTab === "friends" && (
