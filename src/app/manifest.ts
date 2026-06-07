@@ -15,9 +15,10 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#F8F7FF",
     theme_color: "#6C63FF",
     icons: [
-      { src: "/favicon.ico", sizes: "any", type: "image/x-icon" },
-      // Add /icon-192.png and /icon-512.png to public/ for richer install icons,
-      // or let PWABuilder generate them from the deployed site.
+      { src: "/icon.svg", sizes: "any", type: "image/svg+xml" },
+      { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };
 }
