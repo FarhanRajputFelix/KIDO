@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMobileSession } from "@/lib/mobile-auth";
+import { getAccessibleChild } from "@/lib/access";
 import { runAgentPipeline, AgentContext } from "@/lib/agents";
 
 // POST /api/agents/trace — Run all agents and save trace
@@ -16,6 +17,10 @@ export async function POST(req: NextRequest) {
 
     if (!childId) {
       return NextResponse.json({ error: "childId required" }, { status: 400 });
+    }
+
+    if (!(await getAccessibleChild(session, childId))) {
+      return NextResponse.json({ error: "Child not found or access denied" }, { status: 403 });
     }
 
     // Fetch child data for context
@@ -174,6 +179,10 @@ export async function GET(req: NextRequest) {
 
     if (!childId) {
       return NextResponse.json({ error: "childId required" }, { status: 400 });
+    }
+
+    if (!(await getAccessibleChild(session, childId))) {
+      return NextResponse.json({ error: "Child not found or access denied" }, { status: 403 });
     }
 
     const traces = await prisma.agentTrace.findMany({

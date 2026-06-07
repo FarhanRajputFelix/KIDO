@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMobileSession } from "@/lib/mobile-auth";
+import { getAccessibleChild } from "@/lib/access";
 import { chatWithStudent, ChildProfile } from "@/lib/gemini";
 
 // POST /api/ai/chat — Chat with AI learning assistant
@@ -17,10 +18,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "childId and message required" }, { status: 400 });
     }
 
-    // Fetch child profile
-    const child = await prisma.child.findUnique({ where: { id: childId } });
+    // Fetch child profile — only if this account is allowed to access it
+    const child = await getAccessibleChild(session, childId);
     if (!child) {
-      return NextResponse.json({ error: "Child not found" }, { status: 404 });
+      return NextResponse.json({ error: "Child not found or access denied" }, { status: 403 });
     }
 
     const safeParse = (str: any) => { try { return str && typeof str === "string" && str.trim().startsWith("[") ? JSON.parse(str) : []; } catch { return []; } };
@@ -80,6 +81,11 @@ export async function GET(req: NextRequest) {
 
     if (!childId) {
       return NextResponse.json({ error: "childId required" }, { status: 400 });
+    }
+
+    const child = await getAccessibleChild(session, childId);
+    if (!child) {
+      return NextResponse.json({ error: "Child not found or access denied" }, { status: 403 });
     }
 
     const messages = await prisma.chatMessage.findMany({

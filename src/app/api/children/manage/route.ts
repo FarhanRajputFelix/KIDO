@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMobileSession } from "@/lib/mobile-auth";
+import { getAccessibleChild } from "@/lib/access";
 import bcrypt from "bcryptjs";
 
 // POST /api/children/manage — Parent creates a child account
@@ -46,6 +47,8 @@ export async function POST(req: NextRequest) {
           name,
           role: "child",
           avatar: avatar || "🦊",
+          // Parent-created child accounts are trusted — no email verification step.
+          emailVerified: new Date(),
         },
       });
     }
@@ -69,6 +72,11 @@ export async function PUT(req: NextRequest) {
 
     if (!childId) {
       return NextResponse.json({ error: "childId required" }, { status: 400 });
+    }
+
+    // Only the owning parent/admin may edit this child
+    if (!(await getAccessibleChild(session, childId))) {
+      return NextResponse.json({ error: "Child not found or access denied" }, { status: 403 });
     }
 
     const child = await prisma.child.update({

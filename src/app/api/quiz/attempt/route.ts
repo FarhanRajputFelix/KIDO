@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMobileSession } from "@/lib/mobile-auth";
+import { getAccessibleChild } from "@/lib/access";
 import { calculateLevel } from "@/lib/utils";
 import { runAgentPipeline, AgentContext } from "@/lib/agents";
 
@@ -16,6 +17,10 @@ export async function POST(req: NextRequest) {
 
     if (!childId || !quizId || !answers) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    if (!(await getAccessibleChild(session, childId))) {
+      return NextResponse.json({ error: "Child not found or access denied" }, { status: 403 });
     }
 
     // Get the quiz to score

@@ -7,11 +7,11 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 //  No circuit breakers, no shared state, always tries to respond
 // ============================================================
 
-// Valid Gemini models available on free tier (June 2026)
+// Free-tier Gemini models available to this project (verified June 2026).
+// gemini-1.5-* are retired (404) and gemini-2.5/3.x need billing (403) — use 2.0.
 const MODELS = [
-  "gemini-1.5-flash-latest",  // Most stable, always available
-  "gemini-2.0-flash-lite",    // Lighter quota, fast
-  "gemini-2.0-flash",         // Most capable
+  "gemini-2.0-flash",         // Most capable on free tier
+  "gemini-2.0-flash-lite",    // Lighter quota, fast — fallback
 ];
 
 const SYSTEM_PROMPT = `You are Kido Bot, a fun and friendly AI teaching assistant for children aged 6-14.

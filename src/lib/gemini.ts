@@ -2,11 +2,12 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-// Current valid Gemini models (as of June 2026)
+// Free-tier Gemini models available to this project (verified June 2026).
+// Note: gemini-2.5/3.x and *-latest aliases require billing (403 on free tier),
+// and the old gemini-1.5-* models have been retired (404). Stick to 2.0 flash.
 const MODEL_ORDER = [
-  "gemini-2.0-flash",        // Primary — fastest, most capable
-  "gemini-2.0-flash-lite",   // Lighter quota limits
-  "gemini-1.5-flash-latest", // Stable fallback
+  "gemini-2.0-flash",        // Primary — fastest, most capable on free tier
+  "gemini-2.0-flash-lite",   // Lighter quota limits — fallback
 ];
 
 // Circuit breaker: mark a model as temporarily unavailable

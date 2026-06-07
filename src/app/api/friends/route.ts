@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMobileSession } from "@/lib/mobile-auth";
+import { getAccessibleChild } from "@/lib/access";
 
 // GET /api/friends?childId=xxx — Get friends and friend requests
 export async function GET(req: NextRequest) {
@@ -15,6 +16,10 @@ export async function GET(req: NextRequest) {
 
     if (!childId) {
       return NextResponse.json({ error: "childId required" }, { status: 400 });
+    }
+
+    if (!(await getAccessibleChild(session, childId))) {
+      return NextResponse.json({ error: "Child not found or access denied" }, { status: 403 });
     }
 
     // Get sent and received friend requests
@@ -67,6 +72,11 @@ export async function POST(req: NextRequest) {
 
     if (fromChildId === toChildId) {
       return NextResponse.json({ error: "Cannot friend yourself" }, { status: 400 });
+    }
+
+    // The sender must be a child this account is allowed to act for
+    if (!(await getAccessibleChild(session, fromChildId))) {
+      return NextResponse.json({ error: "Not allowed to send requests for this child" }, { status: 403 });
     }
 
     // Verify toChild exists

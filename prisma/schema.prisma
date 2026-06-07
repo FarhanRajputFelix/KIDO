@@ -17,6 +17,7 @@ model User {
   name          String
   role          String    @default("parent") // parent | child | teacher | admin
   avatar        String?
+  emailVerified DateTime?  // null = not yet verified; set when the 6-digit code is confirmed
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -25,6 +26,17 @@ model User {
   classrooms    Classroom[]
   sentMessages     Message[]  @relation("SentMessages")
   receivedMessages Message[]  @relation("ReceivedMessages")
+}
+
+// ─── Email Verification Codes ────────────────────────
+model VerificationCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String   // 6-digit code
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
 }
 
 // ─── Child Profile ───────────────────────────────────

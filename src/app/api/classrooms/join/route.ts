@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMobileSession } from "@/lib/mobile-auth";
+import { getAccessibleChild } from "@/lib/access";
 
 // POST /api/classrooms/join — Student joins a classroom
 export async function POST(req: NextRequest) {
@@ -14,6 +15,11 @@ export async function POST(req: NextRequest) {
 
     if (!childId || !joinCode) {
       return NextResponse.json({ error: "Child ID and Join Code required" }, { status: 400 });
+    }
+
+    // Only enroll a child this account is allowed to act for
+    if (!(await getAccessibleChild(session, childId))) {
+      return NextResponse.json({ error: "Child not found or access denied" }, { status: 403 });
     }
 
     const classroom = await prisma.classroom.findUnique({

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 
-export default function LoginPage() {
+function LoginInner() {
   const router = useRouter();
+  const params = useSearchParams();
+  const justVerified = params.get("verified") === "true";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -18,7 +20,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const result = await signIn("credentials", { email, password, redirect: false });
-      if (result?.error) setError("Invalid email or password");
+      if (result?.error) setError("Invalid email or password — or your email isn't verified yet.");
       else router.push("/dashboard");
     } catch {
       setError("Something went wrong. Please try again.");
@@ -70,8 +72,22 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {justVerified && (
+              <div className="alert-gold text-sm text-center font-semibold" style={{ color: "#705d00" }}>
+                ✅ Email verified! You can now sign in.
+              </div>
+            )}
             {error && (
-              <div className="alert-urgent text-sm text-center font-semibold">{error}</div>
+              <div className="alert-urgent text-sm text-center font-semibold">
+                {error}
+                {email && (
+                  <>
+                    {" "}
+                    <Link href={`/verify?email=${encodeURIComponent(email.trim().toLowerCase())}`}
+                          className="font-bold underline">Verify email</Link>
+                  </>
+                )}
+              </div>
             )}
 
             <div>
@@ -117,5 +133,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ background: "#F8F7FF" }} />}>
+      <LoginInner />
+    </Suspense>
   );
 }

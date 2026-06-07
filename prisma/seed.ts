@@ -28,24 +28,26 @@ async function main() {
 
   const password = await bcrypt.hash("password123", 12);
 
+  const verified = new Date(); // demo accounts are pre-verified
+
   // Create admin user
   const admin = await prisma.user.create({
-    data: { email: "admin@kido.com", password, name: "Admin User", role: "admin", avatar: "🛡️" },
+    data: { email: "admin@kido.com", password, name: "Admin User", role: "admin", avatar: "🛡️", emailVerified: verified },
   });
 
   // Create parent user
   const parent = await prisma.user.create({
-    data: { email: "parent@kido.com", password, name: "Sara Ahmed", role: "parent", avatar: "👩" },
+    data: { email: "parent@kido.com", password, name: "Sara Ahmed", role: "parent", avatar: "👩", emailVerified: verified },
   });
 
   // Create teacher user
   const teacher = await prisma.user.create({
-    data: { email: "teacher@kido.com", password, name: "Mr. Johnson", role: "teacher", avatar: "👨‍🏫" },
+    data: { email: "teacher@kido.com", password, name: "Mr. Johnson", role: "teacher", avatar: "👨‍🏫", emailVerified: verified },
   });
 
   // Create child user account (for direct kid login)
   const childUser = await prisma.user.create({
-    data: { email: "aiza@kido.com", password, name: "Aiza", role: "child", avatar: "🦊" },
+    data: { email: "aiza@kido.com", password, name: "Aiza", role: "child", avatar: "🦊", emailVerified: verified },
   });
 
   console.log("✅ Users created (admin, parent, teacher, child)");
@@ -106,7 +108,7 @@ async function main() {
 
   // Create child user for Hamza login
   await prisma.user.create({
-    data: { email: "hamza@kido.com", password, name: "Hamza", role: "child", avatar: "🐯" },
+    data: { email: "hamza@kido.com", password, name: "Hamza", role: "child", avatar: "🐯", emailVerified: verified },
   });
 
   console.log("✅ Children created (Aiza, Ali, Zara, Hamza)");

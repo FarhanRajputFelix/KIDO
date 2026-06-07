@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMobileSession } from "@/lib/mobile-auth";
+import { getAccessibleChild } from "@/lib/access";
 import { generateGameChallenge, ChildProfile } from "@/lib/gemini";
 
 // POST /api/ai/game — Generate AI game challenge
@@ -21,9 +22,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid game type" }, { status: 400 });
     }
 
-    const child = await prisma.child.findUnique({ where: { id: childId } });
+    const child = await getAccessibleChild(session, childId);
     if (!child) {
-      return NextResponse.json({ error: "Child not found" }, { status: 404 });
+      return NextResponse.json({ error: "Child not found or access denied" }, { status: 403 });
     }
 
     const safeParse = (str: any) => { try { return str && typeof str === "string" && str.trim().startsWith("[") ? JSON.parse(str) : []; } catch { return []; } };

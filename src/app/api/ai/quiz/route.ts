@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMobileSession } from "@/lib/mobile-auth";
+import { getAccessibleChild } from "@/lib/access";
 import { generateQuiz, ChildProfile } from "@/lib/gemini";
 
 // POST /api/ai/quiz — Generate a personalized AI quiz
@@ -17,10 +18,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "childId and subject are required" }, { status: 400 });
     }
 
-    // Fetch child profile for personalization
-    const child = await prisma.child.findUnique({ where: { id: childId } });
+    // Fetch child profile for personalization — only if allowed to access it
+    const child = await getAccessibleChild(session, childId);
     if (!child) {
-      return NextResponse.json({ error: "Child not found" }, { status: 404 });
+      return NextResponse.json({ error: "Child not found or access denied" }, { status: 403 });
     }
 
     const childProfile: ChildProfile = {

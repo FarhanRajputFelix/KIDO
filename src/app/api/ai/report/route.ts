@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMobileSession } from "@/lib/mobile-auth";
+import { getAccessibleChild } from "@/lib/access";
 import { generateProgressReport, ChildProfile } from "@/lib/gemini";
 
 // POST /api/ai/report — Generate AI progress report for a child
@@ -15,6 +16,12 @@ export async function POST(req: NextRequest) {
 
     if (!childId) {
       return NextResponse.json({ error: "childId is required" }, { status: 400 });
+    }
+
+    // Authorize access to this child before reading their data
+    const access = await getAccessibleChild(session, childId);
+    if (!access) {
+      return NextResponse.json({ error: "Child not found or access denied" }, { status: 403 });
     }
 
     // Fetch child with all relevant data
@@ -94,6 +101,11 @@ export async function GET(req: NextRequest) {
 
     if (!childId) {
       return NextResponse.json({ error: "childId is required" }, { status: 400 });
+    }
+
+    const access = await getAccessibleChild(session, childId);
+    if (!access) {
+      return NextResponse.json({ error: "Child not found or access denied" }, { status: 403 });
     }
 
     const reports = await prisma.progressReport.findMany({
