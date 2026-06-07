@@ -481,7 +481,26 @@ export default function ParentDashboard() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-foreground/40 text-center py-8">No classroom requests awaiting approval.</p>
+                      <p className="text-sm text-foreground/40 text-center py-6">No classroom requests awaiting approval.</p>
+                    )}
+
+                    {/* Enrolled classrooms */}
+                    <h3 className="font-bold mt-8 mb-3 flex items-center gap-2"><span>✅</span> Enrolled Classrooms</h3>
+                    {data?.enrolledClassrooms?.length > 0 ? (
+                      <div className="space-y-3">
+                        {data.enrolledClassrooms.map((c: any) => (
+                          <div key={`${c.classroomId}-${c.childId}`} className="card flex items-center gap-4" style={{ borderLeftWidth: 4, borderLeftColor: "#10b981" }}>
+                            <span className="text-2xl">🎓</span>
+                            <div className="flex-1">
+                              <div className="font-medium">{c.childName} · {c.classroomName}</div>
+                              <div className="text-xs text-foreground/50">{c.subject ? `${c.subject} · ` : ""}Teacher: {c.teacherName}</div>
+                            </div>
+                            <span className="chip chip-green text-xs">Enrolled</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-foreground/40 text-center py-4">No classrooms yet.</p>
                     )}
                   </div>
                 )}

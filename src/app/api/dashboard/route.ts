@@ -156,11 +156,26 @@ export async function GET(req: NextRequest) {
           }))
       );
 
+      // Classrooms the children are already enrolled in (approved).
+      const enrolledClassrooms = allClassrooms.flatMap(cls =>
+        safeIds(cls.studentIds)
+          .filter(cid => childIds.includes(cid))
+          .map(cid => ({
+            classroomId: cls.id,
+            classroomName: cls.name,
+            subject: cls.subject,
+            teacherName: cls.teacher?.name || "A teacher",
+            childId: cid,
+            childName: childNameById[cid],
+          }))
+      );
+
       return NextResponse.json({
         role: "parent",
         children,
         pendingFriendApprovals,
         pendingClassroomApprovals,
+        enrolledClassrooms,
         stats: { totalChildren: children.length, totalXP, totalQuizzes, avgStreak, unreadAlerts },
       });
     }

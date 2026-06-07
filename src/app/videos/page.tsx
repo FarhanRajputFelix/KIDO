@@ -4,26 +4,33 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
-// Curated, real, kid-safe educational YouTube videos (Crash Course Kids etc.)
+// Curated, real, kid-safe educational YouTube videos with age ranges.
+// Each child only sees videos appropriate for their age (the safety layer).
 interface Video {
-  id: string;          // YouTube video ID
+  id: string;
   title: string;
   description: string;
   subject: string;
   duration: string;
   xp: number;
+  ageMin: number;
+  ageMax: number;
 }
 
 const VIDEOS: Video[] = [
-  { id: "7vTfyAMu6G4", title: "Land and Water", description: "How water shapes the land around us.", subject: "Science", duration: "4m", xp: 15 },
-  { id: "EstPeBt9CyU", title: "How Plants Grow & Make Food", description: "Vegetation transformation and photosynthesis for kids.", subject: "Science", duration: "5m", xp: 15 },
-  { id: "6FB0rDsR_rc", title: "Here Comes the Sun", description: "The Sun at the center of our solar system.", subject: "Geography", duration: "4m", xp: 15 },
-  { id: "Dvhl891zGqU", title: "Weather in Space (Rocky Planets)", description: "Do other planets have weather? Let's find out!", subject: "Geography", duration: "5m", xp: 15 },
-  { id: "WoPtsnIcSv8", title: "Gas Giants & Their Weather", description: "Wild storms on the giant planets.", subject: "Geography", duration: "4m", xp: 15 },
-  { id: "sQK3Yr4Sc_k", title: "Photosynthesis Explained", description: "How plants turn sunlight into energy.", subject: "Science", duration: "13m", xp: 25 },
+  // ── Younger learners (6–11) ──
+  { id: "7vTfyAMu6G4", title: "Land and Water", description: "How water shapes the land around us.", subject: "Science", duration: "4m", xp: 15, ageMin: 6, ageMax: 11 },
+  { id: "EstPeBt9CyU", title: "How Plants Grow & Make Food", description: "Photosynthesis for kids.", subject: "Science", duration: "5m", xp: 15, ageMin: 6, ageMax: 11 },
+  { id: "6FB0rDsR_rc", title: "Here Comes the Sun", description: "The Sun at the center of our solar system.", subject: "Geography", duration: "4m", xp: 15, ageMin: 6, ageMax: 11 },
+  { id: "Dvhl891zGqU", title: "Weather in Space (Rocky Planets)", description: "Do other planets have weather?", subject: "Geography", duration: "5m", xp: 15, ageMin: 6, ageMax: 11 },
+  { id: "WoPtsnIcSv8", title: "Gas Giants & Their Weather", description: "Wild storms on the giant planets.", subject: "Geography", duration: "4m", xp: 15, ageMin: 7, ageMax: 12 },
+  // ── Teens / older grades (12–18) ──
+  { id: "sQK3Yr4Sc_k", title: "Photosynthesis (Biology)", description: "How plants turn sunlight into energy — deeper dive.", subject: "Science", duration: "13m", xp: 25, ageMin: 12, ageMax: 18 },
+  { id: "FSyAehMdpyI", title: "The Nucleus — Chemistry #1", description: "Atoms, the nucleus, and why chemistry is amazing.", subject: "Science", duration: "12m", xp: 25, ageMin: 13, ageMax: 18 },
+  { id: "PmvLB5dIEp8", title: "What Is Organic Chemistry?", description: "Intro to organic chemistry for high-schoolers.", subject: "Science", duration: "12m", xp: 30, ageMin: 14, ageMax: 18 },
+  { id: "Yocja_N5s1I", title: "The Agricultural Revolution", description: "How humans went from hunting to farming.", subject: "History", duration: "11m", xp: 25, ageMin: 12, ageMax: 18 },
+  { id: "O5nskjZ_GoI", title: "Early Computing — CS #1", description: "Where computers came from.", subject: "Coding", duration: "12m", xp: 25, ageMin: 12, ageMax: 18 },
 ];
-
-const CATEGORIES = ["All", ...Array.from(new Set(VIDEOS.map(v => v.subject)))];
 
 const SUBJECT_ICON: Record<string, string> = {
   Science: "🔬", Geography: "🌍", Math: "🔢", History: "🏛️", Art: "🎨", Music: "🎵", English: "📚", Coding: "💻",
@@ -32,7 +39,10 @@ const SUBJECT_ICON: Record<string, string> = {
 export default function VideosPage() {
   const { status } = useSession();
   const [childId, setChildId] = useState<string | null>(null);
+  const [childAge, setChildAge] = useState<number | null>(null);
+  const [childName, setChildName] = useState("");
   const [category, setCategory] = useState("All");
+  const [search, setSearch] = useState("");
   const [active, setActive] = useState<Video | null>(null);
   const [watched, setWatched] = useState<Record<string, boolean>>({});
   const [toast, setToast] = useState("");
@@ -43,12 +53,23 @@ export default function VideosPage() {
         .then(r => r.json())
         .then(d => {
           const child = d.child || d.children?.[0];
-          if (child) setChildId(child.id);
+          if (child) { setChildId(child.id); setChildAge(child.age ?? null); setChildName(child.name || ""); }
         });
     }
   }, [status]);
 
-  const filtered = category === "All" ? VIDEOS : VIDEOS.filter(v => v.subject === category);
+  // Age-appropriate videos only (the safety/age-restriction layer).
+  const ageOk = (v: Video) => childAge == null || (childAge >= v.ageMin && childAge <= v.ageMax);
+  const ageVideos = VIDEOS.filter(ageOk);
+
+  const categories = ["All", ...Array.from(new Set(ageVideos.map(v => v.subject)))];
+
+  const filtered = ageVideos.filter(v => {
+    const inCat = category === "All" || v.subject === category;
+    const q = search.trim().toLowerCase();
+    const inSearch = !q || v.title.toLowerCase().includes(q) || v.description.toLowerCase().includes(q) || v.subject.toLowerCase().includes(q);
+    return inCat && inSearch;
+  });
 
   const awardXp = async (v: Video) => {
     if (!childId || watched[v.id]) return;
@@ -77,15 +98,27 @@ export default function VideosPage() {
         <Link href="/dashboard" className="btn-secondary py-2 px-4 text-sm no-underline">← Back</Link>
       </nav>
 
-      <main className="flex-1 p-5 md:p-8 max-w-5xl mx-auto w-full">
-        <div className="mb-5">
+      <main className="flex-1 p-5 md:p-8 max-w-6xl mx-auto w-full">
+        <div className="mb-4">
           <h1 className="text-2xl md:text-3xl font-extrabold flex items-center gap-2" style={{ color: "#1a1a2e" }}>▶️ Video Library</h1>
-          <p className="text-sm font-semibold" style={{ color: "#777587" }}>Safe, educational videos just for you</p>
+          <p className="text-sm font-semibold" style={{ color: "#777587" }}>
+            Safe, educational videos{childAge != null ? ` picked for age ${childAge}` : ""} 🛡️
+          </p>
+        </div>
+
+        {/* Search bar */}
+        <div className="mb-4">
+          <input
+            className="input"
+            placeholder="🔍 Search videos (e.g. chemistry, planets, history)..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
         </div>
 
         {/* Category chips */}
         <div className="flex flex-wrap gap-2 mb-6">
-          {CATEGORIES.map(c => (
+          {categories.map(c => (
             <button key={c} onClick={() => setCategory(c)}
               className="chip cursor-pointer text-sm"
               style={{
@@ -99,28 +132,35 @@ export default function VideosPage() {
         </div>
 
         {/* Video grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map(v => (
-            <div key={v.id} onClick={() => setActive(v)} className="card cursor-pointer p-0 overflow-hidden group" style={{ boxShadow: "0 3px 0 #e8e5ff" }}>
-              <div className="relative">
-                <img src={`https://img.youtube.com/vi/${v.id}/hqdefault.jpg`} alt={v.title} className="w-full h-40 object-cover" />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-all">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl" style={{ background: "rgba(255,255,255,0.9)" }}>▶️</div>
+        {filtered.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="text-5xl mb-3">🔍</div>
+            <p className="font-semibold" style={{ color: "#777587" }}>No videos match your search.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filtered.map(v => (
+              <div key={v.id} onClick={() => setActive(v)} className="card cursor-pointer p-0 overflow-hidden group" style={{ boxShadow: "0 3px 0 #e8e5ff" }}>
+                <div className="relative">
+                  <img src={`https://img.youtube.com/vi/${v.id}/hqdefault.jpg`} alt={v.title} className="w-full h-40 object-cover" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-all">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl" style={{ background: "rgba(255,255,255,0.9)" }}>▶️</div>
+                  </div>
+                  <span className="absolute top-2 right-2 chip chip-gold text-xs">+{v.xp} XP</span>
+                  {watched[v.id] && <span className="absolute top-2 left-2 chip chip-green text-xs">✓ Watched</span>}
                 </div>
-                <span className="absolute top-2 right-2 chip chip-gold text-xs">+{v.xp} XP</span>
-                {watched[v.id] && <span className="absolute top-2 left-2 chip chip-green text-xs">✓ Watched</span>}
-              </div>
-              <div className="p-4">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span>{SUBJECT_ICON[v.subject] || "📘"}</span>
-                  <h3 className="font-bold text-sm" style={{ color: "#1a1a2e" }}>{v.title}</h3>
+                <div className="p-4">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span>{SUBJECT_ICON[v.subject] || "📘"}</span>
+                    <h3 className="font-bold text-sm" style={{ color: "#1a1a2e" }}>{v.title}</h3>
+                  </div>
+                  <p className="text-xs mb-2" style={{ color: "#777587" }}>{v.description}</p>
+                  <div className="text-xs font-semibold" style={{ color: "#aaa" }}>🕐 {v.duration} · Ages {v.ageMin}–{v.ageMax}</div>
                 </div>
-                <p className="text-xs mb-2" style={{ color: "#777587" }}>{v.description}</p>
-                <div className="text-xs font-semibold" style={{ color: "#aaa" }}>🕐 {v.duration}</div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </main>
 
       {/* Player modal */}

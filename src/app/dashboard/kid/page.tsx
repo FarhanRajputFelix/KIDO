@@ -94,13 +94,12 @@ export default function KidDashboard() {
         </div>
         <div className="flex items-center gap-2">
           <div className="chip chip-gold animate-gold-pulse">🔥 {child.streak} day streak</div>
-          <Link href="/agents" className="chip chip-purple text-xs no-underline hidden md:flex">🧠 AI</Link>
           <button onClick={() => signOut({ callbackUrl: "/" })} className="btn-secondary py-2 px-3 text-sm">🚪</button>
         </div>
       </nav>
 
       <main className="flex-1 px-5 py-5 overflow-y-auto">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-6xl mx-auto">
 
           {/* Stitch hero banner */}
           <div className="hero-banner mb-5 animate-slide-up">
@@ -151,6 +150,9 @@ export default function KidDashboard() {
             <Link href="/quiz" className="btn-primary no-underline text-xs py-2 px-3">Start →</Link>
           </div>
 
+          {/* Two-column layout on desktop, single column on mobile */}
+          <div className="lg:grid lg:grid-cols-2 lg:gap-x-6 lg:items-start">
+          <div>
           {/* Subject cards */}
           <h3 className="font-extrabold text-base mb-3" style={{ color: "#1a1a2e" }}>Your Subjects 📚</h3>
           <div className="grid grid-cols-2 gap-3 mb-5">
@@ -204,8 +206,11 @@ export default function KidDashboard() {
             </div>
           </div>
 
+          </div>{/* end left column */}
+          <div>{/* right column */}
+
           {/* Classrooms + Friends */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
             {/* Classrooms */}
             <div className="card" style={{ boxShadow: "0 3px 0 #e8e5ff" }}>
               <div className="flex items-center justify-between mb-3">
@@ -329,13 +334,15 @@ export default function KidDashboard() {
             </div>
           </div>
 
+          </div>{/* end right column */}
+          </div>{/* end two-column layout */}
+
           {/* Bottom links */}
           <div className="flex flex-wrap gap-3 mb-4">
             <Link href="/leaderboard" className="btn-primary no-underline text-sm">⭐ Leaderboard</Link>
             <Link href="/videos" className="btn-secondary no-underline text-sm">📺 Videos</Link>
             <Link href="/messages" className="btn-secondary no-underline text-sm">💬 Messages</Link>
             <Link href="/achievements" className="btn-secondary no-underline text-sm">🏆 Achievements</Link>
-            <Link href="/agents" className="btn-secondary no-underline text-sm">🧠 AI Pipeline</Link>
           </div>
         </div>
       </main>
