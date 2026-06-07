@@ -28,7 +28,9 @@ export default function RegisterPage() {
       });
       const data = await res.json();
       if (!res.ok) setError(data.error || "Registration failed");
-      else router.push(`/verify?email=${encodeURIComponent(formData.email.trim().toLowerCase())}`);
+      else if (data.needsVerification)
+        router.push(`/verify?email=${encodeURIComponent(formData.email.trim().toLowerCase())}`);
+      else router.push("/login?registered=true");
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

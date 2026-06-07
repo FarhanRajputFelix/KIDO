@@ -28,8 +28,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!isPasswordValid) return null;
 
-        // Block sign-in until the email has been verified.
-        if (!user.emailVerified) {
+        // Block sign-in until the email has been verified — only when
+        // verification is enforced (REQUIRE_EMAIL_VERIFICATION="true").
+        if (process.env.REQUIRE_EMAIL_VERIFICATION === "true" && !user.emailVerified) {
           throw new Error("EmailNotVerified");
         }
 
