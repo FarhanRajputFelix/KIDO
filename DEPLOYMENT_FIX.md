@@ -22,10 +22,14 @@ Add these four (select **Production**, **Preview**, and **Development** for each
 | `GEMINI_API_KEY` | A **valid** Google AI Studio key — see section 2 ⚠️ |
 | `RESEND_API_KEY` | API key from https://resend.com/api-keys (for signup verification emails) |
 | `EMAIL_FROM` | *(optional)* `KIDO <noreply@yourdomain.com>` after you verify a domain in Resend. Leave unset to use Resend's test sender. |
-| `NODE_ENV` | `production` |
 
-> Do **NOT** set `NEXTAUTH_URL` on Vercel. NextAuth v5 (`trustHost: true`, already configured in
-> `src/lib/auth.ts`) auto-detects the correct Vercel URL. A hardcoded value will break login.
+> ⚠️ Do **NOT** set `NODE_ENV` on Vercel. Vercel sets `NODE_ENV=production` itself at runtime.
+> Setting it manually makes `npm install` skip devDependencies (`@tailwindcss/postcss`,
+> `typescript`, etc.), which breaks the build with "Cannot find module '@tailwindcss/postcss'"
+> and "Can't resolve '@/lib/...'" errors.
+
+> Do **NOT** set `NEXTAUTH_URL` on Vercel either. NextAuth v5 (`trustHost: true`, already configured
+> in `src/lib/auth.ts`) auto-detects the correct Vercel URL. A hardcoded value will break login.
 
 After adding them, **redeploy** (Deployments → ⋯ → Redeploy). Env vars only take effect on a new build.
 
@@ -115,8 +119,9 @@ local testing isn't blocked.
 ---
 
 ## Checklist
-- [ ] `DATABASE_URL`, `AUTH_SECRET`, `GEMINI_API_KEY`, `RESEND_API_KEY`, `NODE_ENV` set in Vercel
+- [ ] `DATABASE_URL`, `AUTH_SECRET`, `GEMINI_API_KEY`, `RESEND_API_KEY` set in Vercel
 - [ ] `GEMINI_API_KEY` starts with `AIza` (regenerated from Google AI Studio)
+- [ ] `NODE_ENV` NOT set on Vercel (Vercel sets it; manual value breaks the build)
 - [ ] `NEXTAUTH_URL` NOT set on Vercel
 - [ ] `npm run db:push` run against the Neon database (adds VerificationCode + emailVerified)
 - [ ] Existing users backfilled: `UPDATE "User" SET "emailVerified" = NOW() WHERE "emailVerified" IS NULL;`
