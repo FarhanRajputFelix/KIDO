@@ -73,19 +73,48 @@ model Child {
   sentChallenges         PeerChallenge[] @relation("ChallengerRel")
   receivedChallenges     PeerChallenge[] @relation("ChallengedRel")
   chatMessages           ChatMessage[]
+  chatSessions           ChatSession[]
+  gameAttempts           GameAttempt[]
   screenTimeLogs         ScreenTimeLog[]
   progressReports        ProgressReport[]
   agentTraces            AgentTrace[]
+}
+
+// ─── AI Chat Sessions (one per conversation thread) ──
+model ChatSession {
+  id            String   @id @default(cuid())
+  childId       String
+  title         String   @default("New Chat")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  child         Child         @relation(fields: [childId], references: [id])
+  messages      ChatMessage[]
 }
 
 // ─── AI Chat Messages ────────────────────────────────
 model ChatMessage {
   id            String   @id @default(cuid())
   childId       String
+  sessionId     String?  // groups messages into a ChatSession (null = legacy/flat)
   role          String   // user | assistant
   content       String
   metadata      String?  // JSON: images, code blocks, etc.
   createdAt     DateTime @default(now())
+
+  child         Child        @relation(fields: [childId], references: [id])
+  session       ChatSession? @relation(fields: [sessionId], references: [id])
+}
+
+// ─── Game Attempts (records XP from games) ───────────
+model GameAttempt {
+  id            String   @id @default(cuid())
+  childId       String
+  gameType      String   // word-builder | story-creator | math-arena
+  score         Int      @default(0)
+  totalPoints   Int      @default(0)
+  xpEarned      Int      @default(0)
+  completedAt   DateTime @default(now())
 
   child         Child    @relation(fields: [childId], references: [id])
 }
@@ -221,7 +250,8 @@ model Classroom {
   joinCode      String   @unique
   grade         String?
   teacherId     String
-  studentIds    String   @default("[]") // JSON array of child IDs
+  studentIds    String   @default("[]") // JSON array of APPROVED child IDs
+  pendingStudentIds String @default("[]") // JSON: child IDs awaiting parent approval
   createdAt     DateTime @default(now())
 
   teacher       User     @relation(fields: [teacherId], references: [id])

@@ -80,6 +80,17 @@ export default function ParentDashboard() {
     } catch (e) { console.error(e); }
   };
 
+  const handleClassroomApproval = async (childId: string, classroomId: string, action: string) => {
+    try {
+      await fetch("/api/classrooms/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ childId, classroomId, action }),
+      });
+      window.location.reload();
+    } catch (e) { console.error(e); }
+  };
+
   const handleGenerateReport = async (childId: string) => {
     setGeneratingReport(true);
     try {
@@ -163,6 +174,7 @@ export default function ParentDashboard() {
               { id: "overview", icon: "📊", label: "Overview" },
               { id: "alerts", icon: "🔔", label: `Alerts (${data?.stats?.unreadAlerts || 0})` },
               { id: "friends", icon: "👥", label: "Friends" },
+              { id: "classrooms", icon: "🎓", label: `Classrooms (${data?.pendingClassroomApprovals?.length || 0})` },
               { id: "reports", icon: "📋", label: "AI Reports" },
               { id: "screen-time", icon: "⏱️", label: "Screen Time" },
               { id: "agents", icon: "🧠", label: "AI Agents" },
@@ -417,6 +429,35 @@ export default function ParentDashboard() {
                         <p className="text-sm text-foreground/40 text-center py-4">No friends yet</p>
                       )}
                     </div>
+                  </div>
+                )}
+
+                {/* Classrooms Tab */}
+                {activeTab === "classrooms" && (
+                  <div className="animate-slide-up">
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><span>🎓</span> Classroom Enrollment</h2>
+                    <p className="text-sm text-foreground/50 mb-4">A teacher can only add your child to a classroom after you approve it here.</p>
+
+                    {data?.pendingClassroomApprovals?.length > 0 ? (
+                      <div className="space-y-3">
+                        {data.pendingClassroomApprovals.map((req: any) => (
+                          <div key={`${req.classroomId}-${req.childId}`} className="card flex items-center gap-4" style={{ borderLeftWidth: 4, borderLeftColor: "#f59e0b" }}>
+                            <div className="flex-1">
+                              <div className="font-medium">{req.childName} → {req.classroomName}</div>
+                              <div className="text-xs text-foreground/50">
+                                {req.subject ? `${req.subject} · ` : ""}Teacher: {req.teacherName}
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button onClick={() => handleClassroomApproval(req.childId, req.classroomId, "approve")} className="btn-primary py-1.5 px-4 text-sm">✓ Approve</button>
+                              <button onClick={() => handleClassroomApproval(req.childId, req.classroomId, "reject")} className="btn-secondary py-1.5 px-4 text-sm">✕ Deny</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-foreground/40 text-center py-8">No classroom requests awaiting approval.</p>
+                    )}
                   </div>
                 )}
 

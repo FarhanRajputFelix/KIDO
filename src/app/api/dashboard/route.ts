@@ -129,16 +129,38 @@ export async function GET(req: NextRequest) {
         : 0;
       const unreadAlerts = children.reduce((sum, c) => sum + c.alerts.length, 0);
 
-      // Find friend requests needing parent approval
+      // Friend requests awaiting this parent's approval (any pending request
+      // involving one of their children).
       const pendingFriendApprovals = children.flatMap(child => [
-        ...child.sentFriendRequests.filter(r => r.status === "approved" && !r.parentApproved),
-        ...child.receivedFriendRequests.filter(r => r.status === "approved" && !r.parentApproved),
+        ...child.sentFriendRequests.filter(r => !r.parentApproved && r.status !== "rejected"),
+        ...child.receivedFriendRequests.filter(r => !r.parentApproved && r.status !== "rejected"),
       ]);
+
+      // Classroom enrollments awaiting this parent's approval.
+      const childIds = children.map(c => c.id);
+      const childNameById: Record<string, string> = Object.fromEntries(children.map(c => [c.id, c.name]));
+      const allClassrooms = await prisma.classroom.findMany({
+        include: { teacher: { select: { name: true } } },
+      });
+      const safeIds = (s: string) => { try { return JSON.parse(s) as string[]; } catch { return []; } };
+      const pendingClassroomApprovals = allClassrooms.flatMap(cls =>
+        safeIds(cls.pendingStudentIds)
+          .filter(cid => childIds.includes(cid))
+          .map(cid => ({
+            classroomId: cls.id,
+            classroomName: cls.name,
+            subject: cls.subject,
+            teacherName: cls.teacher?.name || "A teacher",
+            childId: cid,
+            childName: childNameById[cid],
+          }))
+      );
 
       return NextResponse.json({
         role: "parent",
         children,
         pendingFriendApprovals,
+        pendingClassroomApprovals,
         stats: { totalChildren: children.length, totalXP, totalQuizzes, avgStreak, unreadAlerts },
       });
     }

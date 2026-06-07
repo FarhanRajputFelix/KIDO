@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
@@ -14,6 +14,23 @@ export default function StoryCreatorGame() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [round, setRound] = useState(0);
   const [finished, setFinished] = useState(false);
+  const submittedRef = useRef(false);
+
+  // Persist attempt + award XP once when the story finishes.
+  useEffect(() => {
+    if (finished && childId && !submittedRef.current) {
+      submittedRef.current = true;
+      fetch("/api/games/attempt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          childId,
+          gameType: "story-creator",
+          xpReward: gameData?.challenge?.xpReward || 25,
+        }),
+      }).catch(() => {});
+    }
+  }, [finished, childId, gameData]);
 
   useEffect(() => {
     if (status === "authenticated") {

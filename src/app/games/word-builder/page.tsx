@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
@@ -26,6 +26,8 @@ export default function WordBuilderGame() {
   const [isCorrect, setIsCorrect] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [childId, setChildId] = useState<string | null>(null);
+  const submittedRef = useRef(false);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -34,6 +36,7 @@ export default function WordBuilderGame() {
         .then(d => {
           const child = d.child || d.children?.[0];
           if (child) {
+            setChildId(child.id);
             fetch("/api/ai/game", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -46,6 +49,24 @@ export default function WordBuilderGame() {
         });
     }
   }, [status]);
+
+  // Persist attempt + award XP once when the game ends.
+  useEffect(() => {
+    if (gameOver && childId && !submittedRef.current) {
+      submittedRef.current = true;
+      fetch("/api/games/attempt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          childId,
+          gameType: "word-builder",
+          score,
+          totalPoints: gameData?.challenge?.totalPoints || 100,
+          xpReward: gameData?.challenge?.xpReward || 30,
+        }),
+      }).catch(() => {});
+    }
+  }, [gameOver, childId, score, gameData]);
 
   const puzzles: Puzzle[] = gameData?.challenge?.puzzles || [];
 

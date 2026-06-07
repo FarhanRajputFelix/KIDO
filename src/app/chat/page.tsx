@@ -11,6 +11,12 @@ interface Message {
   createdAt?: string;
 }
 
+interface ChatSessionInfo {
+  id: string;
+  title: string;
+  updatedAt: string;
+}
+
 export default function ChatPage() {
   const { status } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -18,20 +24,43 @@ export default function ChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [childId, setChildId] = useState<string | null>(null);
   const [childName, setChildName] = useState("");
+  const [sessions, setSessions] = useState<ChatSessionInfo[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [showSidebar, setShowSidebar] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const loadSessions = (cid: string) =>
+    fetch(`/api/ai/chat?childId=${cid}`)
+      .then(r => r.json())
+      .then(d => { if (d.sessions) setSessions(d.sessions); return d.sessions as ChatSessionInfo[]; })
+      .catch(() => []);
+
+  const openSession = (cid: string, sessionId: string) => {
+    setActiveSessionId(sessionId);
+    setShowSidebar(false);
+    fetch(`/api/ai/chat?childId=${cid}&sessionId=${sessionId}`)
+      .then(r => r.json())
+      .then(h => setMessages(h.messages || []))
+      .catch(() => setMessages([]));
+  };
+
+  const newChat = () => {
+    setActiveSessionId(null);
+    setMessages([]);
+    setShowSidebar(false);
+  };
 
   useEffect(() => {
     if (status === "authenticated") {
       fetch("/api/dashboard")
         .then(r => r.json())
-        .then(d => {
+        .then(async d => {
           const child = d.child || d.children?.[0];
           if (child) {
             setChildId(child.id);
             setChildName(child.name);
-            fetch(`/api/ai/chat?childId=${child.id}`)
-              .then(r => r.json())
-              .then(h => { if (h.messages) setMessages(h.messages); });
+            const list = await loadSessions(child.id);
+            if (list && list.length > 0) openSession(child.id, list[0].id);
           }
         });
     }
@@ -51,15 +80,28 @@ export default function ChatPage() {
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ childId, message: userMsg }),
+        body: JSON.stringify({ childId, message: userMsg, sessionId: activeSessionId || undefined }),
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "Failed");
+      if (data.sessionId) setActiveSessionId(data.sessionId);
       if (data.message) setMessages(prev => [...prev, { role: "assistant", content: data.message.content }]);
+      loadSessions(childId); // refresh sidebar (new/renamed session, new order)
     } catch {
       setMessages(prev => [...prev, { role: "assistant", content: "Oops! Let me think again. Try asking me something! 😊" }]);
     }
     setIsTyping(false);
+  };
+
+  const deleteSession = async (e: React.MouseEvent, sessionId: string) => {
+    e.stopPropagation();
+    if (!childId) return;
+    await fetch(`/api/ai/chat?childId=${childId}&sessionId=${sessionId}`, { method: "DELETE" }).catch(() => {});
+    const list = await loadSessions(childId);
+    if (activeSessionId === sessionId) {
+      if (list && list.length > 0) openSession(childId, list[0].id);
+      else newChat();
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -72,6 +114,7 @@ export default function ChatPage() {
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/`(.*?)`/g, '<code class="chat-inline-code">$1</code>')
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#6C63FF;font-weight:700;">$1</a>')
       .replace(/\n/g, '<br/>');
 
   if (status === "loading") {
@@ -94,122 +137,170 @@ export default function ChatPage() {
     "🎨 How do colors mix?",
   ];
 
-  return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#F8F7FF" }}>
-      {/* Stitch-style chat header */}
-      <div className="bg-white border-b border-[var(--card-border)] px-5 py-4">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Robot avatar */}
-            <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl"
-                 style={{ background: "linear-gradient(135deg,#6C63FF,#3F3D9E)", boxShadow: "0 3px 0 #2d2b70" }}>
-              🤖
+  const Sidebar = (
+    <div className="flex flex-col h-full" style={{ background: "#fff", borderRight: "1px solid var(--card-border)" }}>
+      <div className="p-4">
+        <button onClick={newChat} className="btn-primary w-full py-3 text-sm">+ New Chat</button>
+      </div>
+      <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-1">
+        {sessions.length === 0 && (
+          <p className="text-xs text-center mt-4" style={{ color: "#aaa" }}>No chats yet</p>
+        )}
+        {sessions.map(s => (
+          <div
+            key={s.id}
+            onClick={() => childId && openSession(childId, s.id)}
+            className="group flex items-center gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-all"
+            style={{
+              background: activeSessionId === s.id ? "#6C63FF" : "transparent",
+              color: activeSessionId === s.id ? "#fff" : "#1a1a2e",
+            }}
+          >
+            <span className="text-sm">💬</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold truncate">{s.title || "New Chat"}</div>
+              <div className="text-[11px] opacity-60">{new Date(s.updatedAt).toLocaleDateString()}</div>
             </div>
-            <div>
-              <div className="font-extrabold text-base" style={{ color: "#1a1a2e" }}>Kido AI</div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full" style={{ background: isTyping ? "#f59e0b" : "#10b981" }} />
-                <span className="text-xs font-semibold" style={{ color: "#777587" }}>
-                  {isTyping ? "Thinking..." : "Your learning buddy"}
-                </span>
+            <button
+              onClick={(e) => deleteSession(e, s.id)}
+              className="opacity-0 group-hover:opacity-100 text-xs px-1"
+              style={{ color: activeSessionId === s.id ? "#fff" : "#999", background: "transparent", border: "none", cursor: "pointer" }}
+              title="Delete chat"
+            >
+              🗑️
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen flex" style={{ background: "#F8F7FF" }}>
+      {/* Desktop sidebar */}
+      <aside className="hidden md:block w-64 shrink-0">{Sidebar}</aside>
+
+      {/* Mobile sidebar drawer */}
+      {showSidebar && (
+        <div className="md:hidden fixed inset-0 z-40 flex">
+          <div className="w-64 h-full">{Sidebar}</div>
+          <div className="flex-1 bg-black/40" onClick={() => setShowSidebar(false)} />
+        </div>
+      )}
+
+      {/* Chat column */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <div className="bg-white border-b border-[var(--card-border)] px-5 py-4">
+          <div className="max-w-2xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button onClick={() => setShowSidebar(true)} className="md:hidden text-xl" style={{ background: "transparent", border: "none" }}>☰</button>
+              <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl"
+                   style={{ background: "linear-gradient(135deg,#6C63FF,#3F3D9E)", boxShadow: "0 3px 0 #2d2b70" }}>
+                🤖
+              </div>
+              <div>
+                <div className="font-extrabold text-base" style={{ color: "#1a1a2e" }}>Kido AI Tutor</div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{ background: isTyping ? "#f59e0b" : "#10b981" }} />
+                  <span className="text-xs font-semibold" style={{ color: "#777587" }}>
+                    {isTyping ? "Thinking..." : "Your learning buddy"}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="chip chip-gold">⚡ 5 XP / chat</div>
-            <Link href="/dashboard" className="btn-secondary py-2 px-4 text-sm no-underline">← Back</Link>
+            <div className="flex items-center gap-2">
+              <div className="chip chip-gold">⚡ 5 XP / chat</div>
+              <Link href="/dashboard" className="btn-secondary py-2 px-4 text-sm no-underline">← Back</Link>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-5" style={{ maxHeight: "calc(100vh - 140px)" }}>
-        <div className="max-w-2xl mx-auto space-y-4">
-
-          {/* Welcome state */}
-          {messages.length === 0 && (
-            <div className="text-center py-8 animate-slide-up">
-              <div className="text-6xl mb-4 animate-float">🤖</div>
-              <h2 className="text-2xl font-extrabold mb-2" style={{ color: "#1a1a2e" }}>
-                Hi {childName || "there"}! 👋
-              </h2>
-              <p className="text-sm font-semibold mb-6 max-w-xs mx-auto" style={{ color: "#777587" }}>
-                I&apos;m Kido AI — your personal learning buddy! Ask me anything and I&apos;ll help you learn.
-              </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {quickPrompts.map(q => (
-                  <button key={q} onClick={() => setInput(q)}
-                    className="chip chip-purple hover:bg-[#6C63FF] hover:text-white transition-all cursor-pointer text-xs py-2 px-3">
-                    {q}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Message bubbles */}
-          {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-slide-up`}>
-              {msg.role === "assistant" && (
-                <div className="w-9 h-9 rounded-2xl flex items-center justify-center text-base mr-2 shrink-0"
-                     style={{ background: "linear-gradient(135deg,#6C63FF,#3F3D9E)" }}>
-                  🤖
-                </div>
-              )}
-              <div>
-                {msg.role === "assistant" && (
-                  <div className="text-xs font-bold mb-1 ml-1" style={{ color: "#6C63FF" }}>Kido AI</div>
-                )}
-                <div className={msg.role === "user" ? "chat-bubble-user" : "chat-bubble-ai"}>
-                  <div className="chat-content" dangerouslySetInnerHTML={{ __html: formatContent(msg.content) }} />
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {/* Typing indicator */}
-          {isTyping && (
-            <div className="flex justify-start animate-slide-up">
-              <div className="w-9 h-9 rounded-2xl flex items-center justify-center text-base mr-2 shrink-0"
-                   style={{ background: "linear-gradient(135deg,#6C63FF,#3F3D9E)" }}>🤖</div>
-              <div className="chat-bubble-ai">
-                <div className="flex gap-1.5 items-center">
-                  {[0, 150, 300].map(delay => (
-                    <div key={delay} className="w-2.5 h-2.5 rounded-full animate-bounce"
-                         style={{ background: "#6C63FF", animationDelay: `${delay}ms` }} />
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-4 py-5" style={{ maxHeight: "calc(100vh - 140px)" }}>
+          <div className="max-w-2xl mx-auto space-y-4">
+            {messages.length === 0 && (
+              <div className="text-center py-8 animate-slide-up">
+                <div className="text-6xl mb-4 animate-float">🤖</div>
+                <h2 className="text-2xl font-extrabold mb-2" style={{ color: "#1a1a2e" }}>
+                  Hi {childName || "there"}! 👋
+                </h2>
+                <p className="text-sm font-semibold mb-6 max-w-xs mx-auto" style={{ color: "#777587" }}>
+                  I&apos;m Kido AI — your personal learning buddy! Ask me anything and I&apos;ll help you learn.
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {quickPrompts.map(q => (
+                    <button key={q} onClick={() => setInput(q)}
+                      className="chip chip-purple hover:bg-[#6C63FF] hover:text-white transition-all cursor-pointer text-xs py-2 px-3">
+                      {q}
+                    </button>
                   ))}
                 </div>
               </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
+            )}
 
-      {/* Input bar - Stitch style */}
-      <div className="bg-white border-t border-[var(--card-border)] px-5 py-4">
-        <div className="max-w-2xl mx-auto flex gap-3">
-          <textarea
-            className="input flex-1 resize-none"
-            rows={1}
-            placeholder="Ask Kido AI anything! 🚀"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isTyping || !childId}
-            style={{ minHeight: "48px", maxHeight: "120px" }}
-          />
-          <button
-            onClick={handleSend}
-            disabled={isTyping || !input.trim() || !childId}
-            className="btn-primary w-14 h-12 rounded-2xl p-0 text-xl shrink-0"
-            style={{ opacity: isTyping || !input.trim() || !childId ? 0.5 : 1 }}>
-            ✨
-          </button>
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-slide-up`}>
+                {msg.role === "assistant" && (
+                  <div className="w-9 h-9 rounded-2xl flex items-center justify-center text-base mr-2 shrink-0"
+                       style={{ background: "linear-gradient(135deg,#6C63FF,#3F3D9E)" }}>
+                    🤖
+                  </div>
+                )}
+                <div>
+                  {msg.role === "assistant" && (
+                    <div className="text-xs font-bold mb-1 ml-1" style={{ color: "#6C63FF" }}>Kido AI</div>
+                  )}
+                  <div className={msg.role === "user" ? "chat-bubble-user" : "chat-bubble-ai"}>
+                    <div className="chat-content" dangerouslySetInnerHTML={{ __html: formatContent(msg.content) }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {isTyping && (
+              <div className="flex justify-start animate-slide-up">
+                <div className="w-9 h-9 rounded-2xl flex items-center justify-center text-base mr-2 shrink-0"
+                     style={{ background: "linear-gradient(135deg,#6C63FF,#3F3D9E)" }}>🤖</div>
+                <div className="chat-bubble-ai">
+                  <div className="flex gap-1.5 items-center">
+                    {[0, 150, 300].map(delay => (
+                      <div key={delay} className="w-2.5 h-2.5 rounded-full animate-bounce"
+                           style={{ background: "#6C63FF", animationDelay: `${delay}ms` }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
         </div>
-        <p className="text-center text-xs mt-2 font-semibold" style={{ color: "#c5c0ff" }}>
-          Powered by Google Gemini AI · Safe for Kids 🛡️
-        </p>
+
+        {/* Input bar */}
+        <div className="bg-white border-t border-[var(--card-border)] px-5 py-4">
+          <div className="max-w-2xl mx-auto flex gap-3">
+            <textarea
+              className="input flex-1 resize-none"
+              rows={1}
+              placeholder="Ask Kido AI anything! 🚀"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isTyping || !childId}
+              style={{ minHeight: "48px", maxHeight: "120px" }}
+            />
+            <button
+              onClick={handleSend}
+              disabled={isTyping || !input.trim() || !childId}
+              className="btn-primary w-14 h-12 rounded-2xl p-0 text-xl shrink-0"
+              style={{ opacity: isTyping || !input.trim() || !childId ? 0.5 : 1 }}>
+              ✨
+            </button>
+          </div>
+          <p className="text-center text-xs mt-2 font-semibold" style={{ color: "#c5c0ff" }}>
+            Powered by AI · Safe for Kids 🛡️
+          </p>
+        </div>
       </div>
     </div>
   );

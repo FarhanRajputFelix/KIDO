@@ -24,7 +24,9 @@ export default function MathArenaGame() {
   const [gameOver, setGameOver] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
   const [isRunning, setIsRunning] = useState(false);
+  const [childId, setChildId] = useState<string | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const submittedRef = useRef(false);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -33,6 +35,7 @@ export default function MathArenaGame() {
         .then(d => {
           const child = d.child || d.children?.[0];
           if (child) {
+            setChildId(child.id);
             fetch("/api/ai/game", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -61,6 +64,24 @@ export default function MathArenaGame() {
     }
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [timeLeft, isRunning]);
+
+  // Persist the attempt + award XP once, when the game ends.
+  useEffect(() => {
+    if (gameOver && childId && !submittedRef.current) {
+      submittedRef.current = true;
+      fetch("/api/games/attempt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          childId,
+          gameType: "math-arena",
+          score,
+          totalPoints: gameData?.challenge?.totalPoints || 100,
+          xpReward: gameData?.challenge?.xpReward || 40,
+        }),
+      }).catch(() => {});
+    }
+  }, [gameOver, childId, score, gameData]);
 
   const problems: Problem[] = gameData?.challenge?.problems || gameData?.challenge?.questions || [];
 
