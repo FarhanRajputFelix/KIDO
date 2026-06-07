@@ -14,7 +14,45 @@ const MODEL_ORDER = [
 const quotaExhausted = new Map<string, number>();
 const CIRCUIT_RESET_MS = 60 * 1000; // 1 minute (quota resets per minute)
 
-async function generateWithFallback(prompt: string): Promise<string> {
+// ─── Groq (primary — free, no credit card required) ──────────────
+// Get a free key at https://console.groq.com/keys and set GROQ_API_KEY.
+// OpenAI-compatible chat completions API.
+async function callGroq(prompt: string): Promise<string> {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) throw new Error("No GROQ_API_KEY");
+
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+    body: JSON.stringify({
+      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Groq ${res.status}: ${body.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  const text = data?.choices?.[0]?.message?.content;
+  if (!text) throw new Error("Groq returned empty response");
+  return text;
+}
+
+// Returns raw model text (no formatting stripped). Tries Groq first (free),
+// then falls back through the Gemini models.
+async function generateRaw(prompt: string): Promise<string> {
+  // Prefer Groq when configured — free tier, no card, generous limits.
+  if (process.env.GROQ_API_KEY) {
+    try {
+      return await callGroq(prompt);
+    } catch (err) {
+      console.warn("[Groq] failed — falling back to Gemini:", String(err).slice(0, 200));
+    }
+  }
+
   const now = Date.now();
   let lastError: unknown;
 
@@ -27,7 +65,7 @@ async function generateWithFallback(prompt: string): Promise<string> {
       const result = await model.generateContent(prompt);
       const text = result.response.text();
       quotaExhausted.delete(modelName); // Reset on success
-      return text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      return text;
     } catch (err: any) {
       lastError = err;
       const errMsg = err?.message || String(err);
@@ -56,6 +94,17 @@ async function generateWithFallback(prompt: string): Promise<string> {
   // All models exhausted — reset circuits for next request
   quotaExhausted.clear();
   throw lastError;
+}
+
+// For JSON callers (quiz/report/game) — strips markdown code fences.
+async function generateWithFallback(prompt: string): Promise<string> {
+  const text = await generateRaw(prompt);
+  return text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+}
+
+// For chat/tutor callers — preserves formatting. Public so API routes can reuse it.
+export async function generateText(prompt: string): Promise<string> {
+  return generateRaw(prompt);
 }
 
 
@@ -298,7 +347,7 @@ RULES:
   const prompt = `${systemContext}\n\nConversation so far:\n${conversationHistory}\n\nRespond to the latest message as KIDO AI. Use markdown formatting for rich responses (headers, bold, code blocks, lists, etc).`;
 
   try {
-    return await generateWithFallback(prompt);
+    return await generateRaw(prompt);
   } catch {
     const lastMsg = messages[messages.length - 1]?.content || "";
     return `Hi ${childProfile.name}! 👋 I'm KIDO AI, your learning buddy!\n\nI'm having a little trouble connecting right now, but I'm still here to help! 🌟\n\nYou asked: **"${lastMsg}"**\n\nTry asking me again in a moment, or explore one of these fun topics:\n- 🔢 **Math puzzles** — I love showing step-by-step solutions!\n- 🔬 **Science facts** — Did you know the Sun is 4.6 billion years old?\n- 📚 **English stories** — Let's build your vocabulary together!\n- 💻 **Coding** — I can teach you Python, JavaScript and more!\n\n[Watch educational videos for kids](https://www.youtube.com/results?search_query=educational+videos+for+kids)\n\nKeep learning — you're doing amazing! 🚀`;
@@ -460,7 +509,7 @@ Student asks: ${message}
 Kido Bot (respond helpfully and encouragingly):`;
 
   try {
-    return await generateWithFallback(prompt);
+    return await generateRaw(prompt);
   } catch {
     return `Oops! My AI brain is taking a short break 🤖💤\n\nTry asking me again in a moment!\n\n**Fun fact while you wait:** 🌟 Did you know the human brain can store about 2.5 million gigabytes of information? That's more than any computer ever built! 🧠`;
   }

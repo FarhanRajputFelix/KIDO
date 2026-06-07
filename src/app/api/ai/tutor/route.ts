@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { generateText } from "@/lib/gemini";
 
 // ============================================================
 //  KIDO BOT — Standalone Teaching AI
-//  Completely independent from the rest of the app's AI system
-//  No circuit breakers, no shared state, always tries to respond
+//  Uses the shared generator: Groq first (free, no card), Gemini fallback.
 // ============================================================
-
-// Free-tier Gemini models available to this project (verified June 2026).
-// gemini-1.5-* are retired (404) and gemini-2.5/3.x need billing (403) — use 2.0.
-const MODELS = [
-  "gemini-2.0-flash",         // Most capable on free tier
-  "gemini-2.0-flash-lite",    // Lighter quota, fast — fallback
-];
 
 const SYSTEM_PROMPT = `You are Kido Bot, a fun and friendly AI teaching assistant for children aged 6-14.
 Help students understand any subject they are curious about or stuck on.
@@ -39,10 +31,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ reply: "Please ask me something! 😊" });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
+    if (!process.env.GROQ_API_KEY && !process.env.GEMINI_API_KEY) {
       return NextResponse.json({
-        reply: "⚠️ AI is not configured. Please add GEMINI_API_KEY to the .env file.",
+        reply: "⚠️ AI is not configured. Please add GROQ_API_KEY (or GEMINI_API_KEY) to the environment.",
       });
     }
 
@@ -60,39 +51,17 @@ ${historyText}Student: ${message}
 
 Kido Bot:`;
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-
-    // Try each model in sequence
-    for (const modelName of MODELS) {
-      try {
-        console.log(`[KidoBot] Trying model: ${modelName}`);
-        const model = genAI.getGenerativeModel({
-          model: modelName,
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 600,
-          },
-        });
-
-        const result = await model.generateContent(fullPrompt);
-        const reply = result.response.text().trim();
-
-        if (reply) {
-          console.log(`[KidoBot] ✅ ${modelName} responded successfully`);
-          return NextResponse.json({ reply });
-        }
-      } catch (err: any) {
-        const errMsg: string = err?.message || String(err);
-        console.log(`[KidoBot] ❌ ${modelName}: ${errMsg.slice(0, 120)}`);
-        // Continue to next model
-      }
+    try {
+      const reply = (await generateText(fullPrompt)).trim();
+      if (reply) return NextResponse.json({ reply });
+    } catch (err: any) {
+      console.log(`[KidoBot] generation failed: ${(err?.message || String(err)).slice(0, 160)}`);
     }
 
-    // All models failed — give a helpful response instead of error
+    // All providers failed — give a helpful response instead of an error.
     return NextResponse.json({
       reply: `I'm a little busy right now! 🤖⏳\n\n**Please try again in 30 seconds** — my AI brain needs a tiny rest!\n\n💡 **Quick tip while you wait:** The best learners ask lots of questions, and you're already doing that! Keep it up! ⭐`,
     });
-
   } catch (err: any) {
     console.error("[KidoBot] Fatal error:", err?.message);
     return NextResponse.json({
