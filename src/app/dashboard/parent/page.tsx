@@ -39,6 +39,11 @@ export default function ParentDashboard() {
   const [showAddChild, setShowAddChild] = useState(false);
   const [newChild, setNewChild] = useState({ name: "", age: "", grade: "", avatar: "🦊", email: "", password: "" });
   const [generatingReport, setGeneratingReport] = useState(false);
+  const [addChildMsg, setAddChildMsg] = useState("");
+  const [addingChild, setAddingChild] = useState(false);
+
+  const refreshData = () =>
+    fetch("/api/dashboard").then(r => r.json()).then(d => { setData(d); if (!selectedChild && d.children?.[0]) setSelectedChild(d.children[0].id); });
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -54,19 +59,32 @@ export default function ParentDashboard() {
   }, [status]);
 
   const handleAddChild = async () => {
-    if (!newChild.name || !newChild.age) return;
+    if (!newChild.name || !newChild.age) { setAddChildMsg("Name and age are required."); return; }
+    setAddingChild(true);
+    setAddChildMsg("");
     try {
       const res = await fetch("/api/children/manage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newChild),
       });
+      const d = await res.json().catch(() => ({}));
       if (res.ok) {
-        setShowAddChild(false);
+        const loginNote = newChild.email
+          ? (d.loginCreated ? " Login created — they can sign in with that email." : ` ${d.loginError || ""}`)
+          : "";
+        setAddChildMsg(`✅ ${newChild.name} added!${loginNote}`);
+        await refreshData();
         setNewChild({ name: "", age: "", grade: "", avatar: "🦊", email: "", password: "" });
-        window.location.reload();
+        setTimeout(() => { setShowAddChild(false); setAddChildMsg(""); }, 2200);
+      } else {
+        setAddChildMsg(d.error || "Could not add child. Please try again.");
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      setAddChildMsg("Something went wrong. Please try again.");
+    }
+    setAddingChild(false);
   };
 
   const handleFriendApproval = async (requestId: string, action: string) => {
@@ -233,9 +251,16 @@ export default function ParentDashboard() {
                       <label className="label">Child Password (optional)</label>
                       <input className="input" type="password" placeholder="Password" value={newChild.password} onChange={e => setNewChild({ ...newChild, password: e.target.value })} />
                     </div>
+                    {addChildMsg && (
+                      <div className={`text-sm text-center font-semibold rounded-xl py-2 px-3 ${addChildMsg.startsWith("✅") ? "alert-gold" : "alert-urgent"}`} style={addChildMsg.startsWith("✅") ? { color: "#705d00" } : undefined}>
+                        {addChildMsg}
+                      </div>
+                    )}
                     <div className="flex gap-3 pt-2">
-                      <button onClick={handleAddChild} className="btn-primary flex-1">Create Child Account</button>
-                      <button onClick={() => setShowAddChild(false)} className="btn-secondary flex-1">Cancel</button>
+                      <button onClick={handleAddChild} disabled={addingChild} className="btn-primary flex-1" style={{ opacity: addingChild ? 0.7 : 1 }}>
+                        {addingChild ? "Adding..." : "Create Child Account"}
+                      </button>
+                      <button onClick={() => { setShowAddChild(false); setAddChildMsg(""); }} className="btn-secondary flex-1">Cancel</button>
                     </div>
                   </div>
                 </div>

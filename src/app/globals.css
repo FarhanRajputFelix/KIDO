@@ -58,32 +58,30 @@
   --primary: #6C63FF;
   --primary-dark: #3F3D9E;
   --gold: #FFD700;
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  --radius-sm: 10px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f0e1e;
-    --foreground: #e2e0fc;
-    --card: #1a1935;
-    --card-border: #2d2a55;
-    --card-shadow: 0 4px 12px rgba(108, 99, 255, 0.15);
-    --sidebar-bg: #0c0b1a;
-    --sidebar-text: #c4c0ff;
-  }
-}
+/* KIDO is a bright, playful kids app — keep the cheerful theme even when the
+   device is in dark mode (a flat dark UI read as "dull"). */
 
 /* ─── Base ─────────────────────────────────────────── */
 * { box-sizing: border-box; }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(1200px 500px at 100% -10%, rgba(108, 99, 255, 0.10), transparent 60%),
+    radial-gradient(900px 500px at -10% 0%, rgba(255, 215, 0, 0.10), transparent 55%),
+    radial-gradient(700px 500px at 50% 120%, rgba(16, 185, 129, 0.08), transparent 60%),
+    var(--background);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: 'Plus Jakarta Sans', var(--font-jakarta, system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
 }
+
+h1, h2, h3 { letter-spacing: -0.02em; }
 
 /* ─── Animations ───────────────────────────────────── */
 @keyframes float {
@@ -163,16 +161,16 @@ body {
 /* ─── Cards ────────────────────────────────────────── */
 .card {
   background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-md);
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-lg);
   padding: 20px;
-  box-shadow: var(--card-shadow);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 0 #ece9ff, 0 12px 24px rgba(108, 99, 255, 0.08);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 32px rgba(108, 99, 255, 0.14);
+  transform: translateY(-3px);
+  box-shadow: 0 9px 0 #e3dfff, 0 16px 32px rgba(108, 99, 255, 0.16);
 }
 
 /* Glowing gradient border card */

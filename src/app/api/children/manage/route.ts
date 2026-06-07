@@ -37,23 +37,39 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // If email+password provided, create a child user account
+    // If email+password provided, create a child LOGIN account. Failing to
+    // create the login (e.g. email already taken) must NOT fail the whole
+    // request — the child profile is already created.
+    let loginCreated = false;
+    let loginError: string | null = null;
     if (email && password) {
-      const hashedPassword = await bcrypt.hash(password, 12);
-      await prisma.user.create({
-        data: {
-          email,
-          password: hashedPassword,
-          name,
-          role: "child",
-          avatar: avatar || "🦊",
-          // Parent-created child accounts are trusted — no email verification step.
-          emailVerified: new Date(),
-        },
-      });
+      const normalizedEmail = String(email).trim().toLowerCase();
+      try {
+        const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+        if (existing) {
+          loginError = "That login email is already in use — child added without a login.";
+        } else {
+          const hashedPassword = await bcrypt.hash(password, 12);
+          await prisma.user.create({
+            data: {
+              email: normalizedEmail,
+              password: hashedPassword,
+              name,
+              role: "child",
+              avatar: avatar || "🦊",
+              // Parent-created child accounts are trusted — no verification step.
+              emailVerified: new Date(),
+            },
+          });
+          loginCreated = true;
+        }
+      } catch (e: any) {
+        loginError = "Child added, but the login could not be created.";
+        console.error("Child login creation error:", e?.message);
+      }
     }
 
-    return NextResponse.json({ child });
+    return NextResponse.json({ child, loginCreated, loginError }, { status: 201 });
   } catch (error) {
     console.error("Child creation error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
