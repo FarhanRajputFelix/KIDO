@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getMobileSession } from "@/lib/mobile-auth";
 
-// GET /api/quiz - list quizzes with optional filters
+// GET /api/quiz - list quizzes with optional filters (authentication required)
 export async function GET(req: NextRequest) {
   try {
+    const session = await getMobileSession(req);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const subject = searchParams.get("subject");
     const difficulty = searchParams.get("difficulty");

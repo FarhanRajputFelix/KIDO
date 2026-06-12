@@ -46,3 +46,10 @@ next-env.d.ts
 
 /src/generated/prisma
 /src/generated/client
+
+# Local course/viva docs (kept on disk, not in public repo)
+docs/KIDO_Defense_Guide.md
+docs/KIDO_Viva_Prep.md
+docs/KIDO_What_We_Built.md
+docs/KIDO_Final_Report.*
+docs/KIDO_Presentation.pptx

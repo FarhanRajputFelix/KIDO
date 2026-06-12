@@ -1,9 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getMobileSession } from "@/lib/mobile-auth";
 
-// GET /api/leaderboard - get top learners
-export async function GET() {
+// GET /api/leaderboard - get top learners (authentication required)
+export async function GET(req: NextRequest) {
   try {
+    const session = await getMobileSession(req);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const children = await prisma.child.findMany({
       orderBy: { xp: "desc" },
       take: 50,
