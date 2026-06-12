@@ -40,6 +40,26 @@ It is **live, deployed, and installable** as a web app, PWA, and Android APK.
 
 ---
 
+## 🎬 Demo
+
+> ▶️ **Try it live:** **[kido-orcin.vercel.app](https://kido-orcin.vercel.app)** — sign in with `parent@kido.com / password123`
+> 🎥 **Video walkthrough:** _add your Loom/YouTube link here_
+
+**60-second tour:**
+1. **Child** logs in → gamified dashboard (XP · streak · badges)
+2. **AI Tutor** explains a topic step-by-step
+3. Take an **adaptive quiz** → instant XP, level-up & streak
+4. **Parent** approves a friend request + a classroom join (consent gates 🔒)
+5. The **agent pipeline** turns that activity into a real parent insight/alert
+
+<!--
+  📌 To embed an animated demo: screen-record the 5 steps above (Loom or OBS),
+  export a GIF, drop it at docs/demo.gif, then replace this comment with:
+  ![KIDO demo](docs/demo.gif)
+-->
+
+---
+
 ## ✨ Features
 
 | | Feature | Description |
@@ -58,10 +78,15 @@ It is **live, deployed, and installable** as a web app, PWA, and Android APK.
 
 ## 🧠 The Agentic AI Engine — what makes KIDO different
 
-KIDO is **not a chatbot wrapper.** On each learning event it runs an autonomous reasoning loop:
+KIDO is **not a chatbot wrapper.** On each learning event it runs an autonomous reasoning loop (the ReAct pattern):
 
-```
-OBSERVE → ANALYZE → DECIDE → ACT → LEARN
+```mermaid
+flowchart LR
+    O["👁️ OBSERVE<br/>read child state"] --> A["🧩 ANALYZE<br/>11 agents reason"]
+    A --> D["⚖️ DECIDE<br/>merge + contradiction check"]
+    D --> C["⚡ ACT<br/>XP · alerts · adapt difficulty"]
+    C --> L["📚 LEARN<br/>save explainable trace"]
+    L -.feeds next cycle.-> O
 ```
 
 - **Tool-calling** — agents read the database, call the LLM, update XP/level, and raise parent alerts.
@@ -86,14 +111,17 @@ Every run is persisted as an **explainable agent trace**. The AI layer is resili
 
 ## 🏗️ Architecture
 
-```
- Browser / PWA / Android TWA
-        │
- Next.js 15 (App Router) ── Route Handlers (API) ── NextAuth (JWT, RBAC)
-        │                          │
-        │                    AI Engine ── Groq (Llama-3.3) → Gemini → fallback banks
-        │                          │
-        └────── Prisma ORM ──── PostgreSQL (Neon)
+```mermaid
+flowchart TD
+    U["👨‍👩‍👧 Child · Parent · Teacher · Admin"] --> APP["Next.js 15 App<br/>Web · PWA · Android APK"]
+    APP --> API["API Routes<br/>NextAuth · JWT · Role-Based Access"]
+    API --> BL["Business Logic<br/>Quiz · Social · Content · Scoring"]
+    API --> GUARD["🔐 getAccessibleChild()<br/>authorization guard"]
+    BL --> AGENTS["🧠 Agentic AI Engine<br/>11 cooperating agents"]
+    AGENTS --> AI["Groq Llama-3.3 → Gemini → Fallback banks"]
+    BL --> DB[("PostgreSQL · Prisma")]
+    AGENTS --> DB
+    GUARD --> DB
 ```
 
 **Five layers:** Presentation → API Gateway → Business Logic → AI Engine → Data.
