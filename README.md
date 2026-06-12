@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/icon-512.png" width="110" alt="KIDO logo" />
+<img src="docs/social-preview.png" width="100%" alt="KIDO — A Safe, Agentic-AI Learning Ecosystem for Children" />
 
 # KIDO
 
