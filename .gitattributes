@@ -1,0 +1,12 @@
+# GitHub language stats: count only first-party source (TypeScript/React).
+# Config, generated, and vendored files are excluded so the repo reflects the
+# real codebase (~95%+ TypeScript), not build artifacts.
+
+public/**            linguist-vendored
+*.config.mjs         linguist-vendored
+postcss.config.mjs   linguist-vendored
+eslint.config.mjs    linguist-vendored
+src/generated/**     linguist-generated
+next-env.d.ts        linguist-generated
+*.lock               linguist-generated
+package-lock.json    linguist-generated

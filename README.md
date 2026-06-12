@@ -151,6 +151,8 @@ npm run dev            # http://localhost:3000
 
 EdTech for the next billion learners is **underserved on personalization and safety**. KIDO targets that gap with adaptive, gamified learning that keeps **parents in control** — a scalable, safety-first foundation for the South-Asian and global K-8 market.
 
+> 📈 **Investors:** see the full brief — problem, market, *why now*, moat & ask — in **[INVESTORS.md](INVESTORS.md)**.
+
 ---
 
 ## 🤝 Contributing

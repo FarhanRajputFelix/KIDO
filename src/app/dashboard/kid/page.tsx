@@ -85,15 +85,33 @@ export default function KidDashboard() {
 
   return (
     <div className="min-h-screen flex flex-col pb-20 md:pb-0" style={{ background: "#F8F7FF" }}>
-      {/* Stitch top nav */}
-      <nav className="flex items-center justify-between px-5 py-4 bg-white border-b border-[var(--card-border)]">
-        <div className="flex items-center gap-3">
+      {/* Sticky top nav with primary navigation (no scrolling needed) */}
+      <nav className="sticky top-0 z-30 flex items-center justify-between px-5 py-3 bg-white border-b border-[var(--card-border)]" style={{ boxShadow: "0 2px 8px rgba(108,99,255,0.06)" }}>
+        <div className="flex items-center gap-3 shrink-0">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-white"
                style={{ background: "linear-gradient(135deg,#6C63FF,#3F3D9E)", boxShadow: "0 2px 0 #2d2b70" }}>K</div>
           <span className="text-xl font-black gradient-text">KIDO</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="chip chip-gold animate-gold-pulse">🔥 {child.streak} day streak</div>
+        {/* Primary links — always visible on desktop */}
+        <div className="hidden md:flex items-center gap-1">
+          {[
+            { href: "/quiz", icon: "🎯", label: "Quizzes" },
+            { href: "/chat", icon: "🤖", label: "AI Tutor" },
+            { href: "/videos", icon: "📺", label: "Videos" },
+            { href: "/games", icon: "🎮", label: "Games" },
+            { href: "/messages", icon: "💬", label: "Messages" },
+            { href: "/leaderboard", icon: "⭐", label: "Leaderboard" },
+            { href: "/achievements", icon: "🏆", label: "Badges" },
+          ].map(l => (
+            <Link key={l.href} href={l.href}
+              className="no-underline px-3 py-2 rounded-xl text-sm font-bold transition-all hover:bg-[#f0efff]"
+              style={{ color: "#3F3D9E" }}>
+              <span className="mr-1">{l.icon}</span>{l.label}
+            </Link>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="chip chip-gold animate-gold-pulse">🔥 {child.streak}</div>
           <button onClick={() => signOut({ callbackUrl: "/" })} className="btn-secondary py-2 px-3 text-sm">🚪</button>
         </div>
       </nav>
