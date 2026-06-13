@@ -1,4 +1,5 @@
 import Link from "next/link";
+import GuestButton from "@/components/GuestButton";
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
           <span className="gradient-text text-xl">KIDO</span>
         </Link>
         <div className="flex items-center gap-3">
+          <GuestButton className="hidden sm:inline-flex btn-secondary text-sm py-2 px-5" label="👀 Explore as Guest" />
           <Link href="/login" className="btn-secondary text-sm py-2 px-5 no-underline">Log In</Link>
           <Link href="/register" className="btn-primary text-sm py-2 px-5 no-underline">Get Started 🚀</Link>
         </div>
@@ -37,12 +39,12 @@ export default function Home() {
             <Link href="/register" className="btn-gold text-base py-3.5 px-8 no-underline">
               🚀 Start Free Today
             </Link>
-            <Link href="/login" className="no-underline">
-              <button className="glass text-white border border-white/30 rounded-2xl py-3.5 px-8 font-bold text-base hover:bg-white/20 transition-all">
-                I have an account
-              </button>
-            </Link>
+            <GuestButton
+              className="glass text-white border border-white/30 rounded-2xl py-3.5 px-8 font-bold text-base hover:bg-white/20 transition-all cursor-pointer"
+              label="👀 Explore as Guest — no signup"
+            />
           </div>
+          <p className="text-white/60 text-xs mt-3">Jump straight into a live demo — no account needed.</p>
           {/* Decorative robot */}
           <div className="text-6xl mt-8 animate-float">🤖</div>
         </div>
