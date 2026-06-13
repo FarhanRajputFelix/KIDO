@@ -52,11 +52,11 @@ It is **live, deployed, and installable** as a web app, PWA, and Android APK.
 4. **Parent** approves a friend request + a classroom join (consent gates 🔒)
 5. The **agent pipeline** turns that activity into a real parent insight/alert
 
-<!--
-  📌 To embed an animated demo: screen-record the 5 steps above (Loom or OBS),
-  export a GIF, drop it at docs/demo.gif, then replace this comment with:
-  ![KIDO demo](docs/demo.gif)
--->
+<div align="center">
+
+![KIDO demo](docs/demo.gif)
+
+</div>
 
 ---
 
