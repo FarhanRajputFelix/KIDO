@@ -113,22 +113,31 @@ function LoginInner() {
             </p>
           </form>
 
-          {/* Demo credentials - Stitch card style */}
+          {/* Demo credentials — tap a role to auto-fill */}
           <div className="mt-8 card" style={{ background: "#f0efff", border: "1.5px solid #c5c0ff" }}>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-lg">🧪</span>
-              <span className="font-extrabold text-sm" style={{ color: "#1a1a2e" }}>Demo Credentials</span>
+              <span className="font-extrabold text-sm" style={{ color: "#1a1a2e" }}>Try a demo — tap to auto-fill</span>
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="chip chip-purple">Parent</span>
-                <span className="font-semibold" style={{ color: "#464555" }}>parent@kido.com / password123</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="chip chip-purple">Teacher</span>
-                <span className="font-semibold" style={{ color: "#464555" }}>teacher@kido.com / password123</span>
-              </div>
+              {[
+                { role: "Parent", email: "parent@kido.com" },
+                { role: "Teacher", email: "teacher@kido.com" },
+                { role: "Child", email: "aiza@kido.com" },
+              ].map(d => (
+                <button
+                  key={d.email}
+                  type="button"
+                  onClick={() => { setEmail(d.email); setPassword("password123"); }}
+                  className="w-full flex items-center justify-between text-xs p-2 rounded-xl transition-all hover:bg-white"
+                  style={{ background: "transparent", border: "none", cursor: "pointer" }}
+                >
+                  <span className="chip chip-purple">{d.role}</span>
+                  <span className="font-semibold" style={{ color: "#464555" }}>{d.email} / password123</span>
+                </button>
+              ))}
             </div>
+            <p className="text-[11px] mt-2 text-center" style={{ color: "#777587" }}>Tap a role, then “Sign In”.</p>
           </div>
         </div>
       </div>
